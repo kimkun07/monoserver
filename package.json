@@ -4,7 +4,8 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "test": "node start_container_by_yaml.js ./services/aigen.yaml"
+    "start": "node start_container_by_yaml.js ./services/aigen.yaml",
+    "stop": "node stop_container_by_yaml.js ./services/aigen.yaml"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"

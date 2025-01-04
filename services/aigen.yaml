@@ -2,8 +2,10 @@ localhost:
   image: kimkun07/aigendrug23
   tag: 1.3
   port: 8000
+  name: aigen
   script: |-
-    docker run --detach --publish {{port}}:5000 {{image}}:{{tag}}
+    docker run --detach --name {{name}} \
+        --publish {{port}}:5000 {{image}}:{{tag}}
 nginx:
   prefix: /aigen
   additional-config: ""

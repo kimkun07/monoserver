@@ -1,35 +1,21 @@
-// Usage: node start_container_by_yaml.js <yaml_file_path>
+import { loadYamlConfig, executeCommand } from "./util.js";
 
-import { readFileSync } from "fs";
-import { load } from "js-yaml";
-import { exec } from "child_process";
+async function startContainer(path) {
+  try {
+    const config = loadYamlConfig(path);
 
-// 1. Read YAML file path from command line arguments
-const yamlPath = process.argv[2];
-if (!yamlPath) {
-  console.error("Please provide a YAML file path");
-  process.exit(1);
-}
-const yamlContent = readFileSync(yamlPath, "utf8");
-const config = load(yamlContent);
+    // Replace Placeholder to value
+    let script = config.localhost.script;
+    for (const [key, value] of Object.entries(config.localhost)) {
+      const placeholder = `{{${key}}}`;
+      script = script.replaceAll(placeholder, value);
+    }
 
-// 2. Replace placeholders to values in script
-let script = config.localhost.script;
-for (const [key, value] of Object.entries(config.localhost)) {
-  const placeholder = `{{${key}}}`;
-  script = script.replaceAll(placeholder, value);
+    await executeCommand(script);
+  } catch (error) {
+    console.error("Error:", error.message);
+    process.exit(1);
+  }
 }
 
-// 3. Execute the script
-exec(script, (error, stdout, stderr) => {
-  if (error) {
-    console.error(`Error: ${error}`);
-    return;
-  }
-  if (stderr) {
-    console.error(`stderr: ${stderr}`);
-  }
-  if (stdout) {
-    console.log(`stdout: ${stdout}`);
-  }
-});
+startContainer(process.argv[2]);

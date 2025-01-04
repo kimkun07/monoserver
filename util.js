@@ -6,7 +6,8 @@ import { promisify } from "util";
 // return { stdout, stderr }
 export const executeCommand = promisify(exec);
 
-export function loadYamlConfig(yamlPath) {
+// Return a config object from YAML file
+export function readYAML(yamlPath) {
   if (!yamlPath) {
     throw new Error("Please provide a YAML file path");
   }

@@ -1,8 +1,8 @@
-import { loadYamlConfig, executeCommand } from "./util.js";
+import { readYAML, executeCommand } from "./util.js";
 
 async function stopAndRemoveContainer(path) {
   try {
-    const config = loadYamlConfig(path);
+    const config = readYAML(path);
     const { name } = config.localhost;
 
     // Find container id by name

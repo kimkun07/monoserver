@@ -1,8 +1,8 @@
-import { loadYamlConfig, executeCommand } from "./util.js";
+import { readYAML, executeCommand } from "./util.js";
 
 async function startContainer(path) {
   try {
-    const config = loadYamlConfig(path);
+    const config = readYAML(path);
 
     // Replace Placeholder to value
     let script = config.localhost.script;

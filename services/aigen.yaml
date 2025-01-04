@@ -1,14 +1,16 @@
-localhost:
+# yaml-language-server: $schema=../service-schema.json
+
+container:
+  name: aigen
   image: kimkun07/aigendrug23
   tag: 1.3
   port: 8000
-  name: aigen
   script: |-
     docker run --detach --name {{name}} \
         --publish {{port}}:5000 {{image}}:{{tag}}
 nginx:
-  prefix: /aigen
-  additional-config: ""
+  subdomain: aigen
+  additionalConfig: ""
 display:
   state: operating
   detail: |-

@@ -4,11 +4,17 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "start": "node start_container_by_yaml.js ./services/aigen.yaml",
-    "stop": "node stop_container_by_yaml.js ./services/aigen.yaml"
+    "start": "tsx start_container_by_yaml.ts ./services/aigen.yaml",
+    "stop": "tsx stop_container_by_yaml.ts ./services/aigen.yaml"
   },
-  "dependencies": {
-    "js-yaml": "^4.1.0"
+  "devDependencies": {
+    "@tsconfig/node20": "^20.1.4",
+    "@types/js-yaml": "^4.0.5",
+    "@types/node": "^22.10.5",
+    "js-yaml": "^4.1.0",
+    "json-schema-to-ts": "^3.1.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.1.6"
   },
   "keywords": [],
   "author": "",

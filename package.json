@@ -2,9 +2,12 @@
   "name": "monoserver",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node start_container_by_yaml.js ./services/aigen.yaml"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
   },
   "keywords": [],
   "author": "",

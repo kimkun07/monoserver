@@ -7,7 +7,7 @@ async function stopAndRemoveContainer(path: string): Promise<void> {
     const name = service.container.name;
 
     const { stdout: containerId } = await executeCommand(
-      `docker ps -aq --filter name=^/${name}$`
+      `docker ps -aq --filter name=^/${name}$`,
     );
     if (!containerId.trim()) {
       console.log("No container found with name:", name);
@@ -26,7 +26,7 @@ async function stopAndRemoveContainer(path: string): Promise<void> {
   } catch (error) {
     console.error(
       "Error:",
-      error instanceof Error ? error.message : String(error)
+      error instanceof Error ? error.message : String(error),
     );
   }
 }

@@ -1,5 +1,3 @@
-# yaml-language-server: $schema=../service-schema.json
-
 container:
   name: aigen
   image: kimkun07/aigendrug23

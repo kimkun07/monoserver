@@ -39,7 +39,7 @@ async function read_YAML_JSON_file(path: string): Promise<unknown> {
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(
-        `Failed to read YAML/JSON file ${path}: ${error.message}`
+        `Failed to read YAML/JSON file ${path}: ${error.message}`,
       );
     }
     throw new Error(`Failed to read YAML/JSON file ${path}: ${error}`);

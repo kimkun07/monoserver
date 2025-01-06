@@ -20,7 +20,7 @@ export function assert_valid(schema: unknown, data: unknown): boolean {
 /** Validate and print the result */
 export function validate_and_print(
   schema: unknown,
-  targets: { path: string; obj: unknown }[]
+  targets: { path: string; obj: unknown }[],
 ): targets is { path: string; obj: Service }[] {
   let allValid = true;
 

@@ -56,7 +56,7 @@ export type Service = FromSchema<typeof schemaObject>;
 assert.deepStrictEqual(
   /**actual=*/ schemaObject,
   /**expected=*/ schemaJson,
-  "Schema defined in .json and .ts files must be identical"
+  "Schema defined in .json and .ts files must be identical",
 );
 //#endregion
 

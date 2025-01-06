@@ -1,9 +1,8 @@
 import { executeCommand } from "./src/container/util_exec";
-import { readService } from "./src/service-schema";
+import { readService, type Service } from "./src/service-schema";
 
-async function stopAndRemoveContainer(path: string): Promise<void> {
+async function stopAndRemoveContainer(service: Service): Promise<void> {
   try {
-    const service = await readService(path);
     const name = service.container.name;
 
     const { stdout: containerId } = await executeCommand(
@@ -31,4 +30,9 @@ async function stopAndRemoveContainer(path: string): Promise<void> {
   }
 }
 
-stopAndRemoveContainer(process.argv[2]);
+async function test() {
+  const service = await readService(process.argv[2]);
+  stopAndRemoveContainer(service);
+}
+
+test();

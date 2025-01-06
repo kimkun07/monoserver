@@ -1,6 +1,6 @@
-// usage: service-validator [schema file] [target]
+// usage: service-validator [target]
 //        target can be a directory or a file
-//   e.g. service-validator ./service-schema.json ./services
+//   e.g. service-validator ./services
 
 import { readYAMLJSONs } from "./yaml/util_read";
 import { validate_and_print } from "./yaml/yaml_validator";

@@ -1,10 +1,8 @@
 import { executeCommand } from "./src/container/util_exec";
-import { readService } from "./src/service-schema";
+import { readService, type Service } from "./src/service-schema";
 
-async function startContainer(path: string): Promise<void> {
+async function startContainer(service: Service): Promise<void> {
   try {
-    const service = await readService(path);
-
     // Replace placeholder to value
     let script = service.container.script;
     for (const [key, value] of Object.entries(service.container)) {
@@ -23,4 +21,9 @@ async function startContainer(path: string): Promise<void> {
   }
 }
 
-startContainer(process.argv[2]);
+async function test() {
+  const service = await readService(process.argv[2]);
+  startContainer(service);
+}
+
+test();

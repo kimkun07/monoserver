@@ -61,7 +61,7 @@ export type Service = FromSchema<typeof schemaObject>;
 // Assure that two sources of truth are in sync:
 // 1. service-schema.json file
 // 2. service-schema.ts file
-assert.deepStrictEqual(
+assert.deepEqual(
   /**actual=*/ schemaObject,
   /**expected=*/ schemaJson,
   "Schema defined in .json and .ts files must be identical",

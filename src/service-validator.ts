@@ -2,13 +2,14 @@
 //        target can be a directory or a file
 //   e.g. service-validator ./service-schema.json ./services
 
-import { readYAMLs } from "./util.ts";
-import { validate_and_print } from "./yaml-validator.ts";
-import { schemaObject as schema, type Service } from "./service-schema.ts";
+import { readYAMLJSONs } from "./yaml/util_read";
+import { validate_and_print } from "./yaml/yaml_validator";
+import { schemaObject as schema, type Service } from "./service-schema";
 
 async function main(targetPath: string) {
   // 1. read targetObject[]
-  const targets: { path: string; obj: unknown }[] = await readYAMLs(targetPath);
+  const targets: { path: string; obj: unknown }[] =
+    await readYAMLJSONs(targetPath);
 
   // 2. General YAML validation
   const isValidYAML = validate_and_print(schema, targets);
@@ -17,7 +18,9 @@ async function main(targetPath: string) {
   }
 
   // 3. Check for duplicate service names, subdomains, and ports
-  const duplicates = checkDuplicates(targets);
+  const duplicates = checkDuplicates(
+    targets as { path: string; obj: Service }[],
+  );
   const hasDuplicates = printDuplicates(duplicates);
 
   // Exit with error if duplicates were found

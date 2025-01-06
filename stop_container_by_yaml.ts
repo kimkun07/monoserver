@@ -1,5 +1,5 @@
-import { executeCommand } from "./util";
-import { readService } from "./service-schema";
+import { executeCommand } from "./src/container/util_exec";
+import { readService } from "./src/service-schema";
 
 async function stopAndRemoveContainer(path: string): Promise<void> {
   try {

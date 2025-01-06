@@ -1,7 +1,6 @@
 // General yaml validator
-import Ajv, { ValidateFunction, JSONSchemaType, AnySchema } from "ajv";
-import { readYAMLs } from "./util";
-import { Service } from "./service-schema";
+import Ajv, { ValidateFunction, AnySchema } from "ajv";
+import { readYAMLJSONs } from "./util_read";
 
 const ajv = new Ajv({
   allowUnionTypes: true,
@@ -21,7 +20,7 @@ export function assert_valid(schema: unknown, data: unknown): boolean {
 export function validate_and_print(
   schema: unknown,
   targets: { path: string; obj: unknown }[],
-): targets is { path: string; obj: Service }[] {
+) {
   let allValid = true;
 
   for (const target of targets) {
@@ -49,8 +48,9 @@ async function main() {
   let schemaPath = process.argv[2];
   let targetPath = process.argv[3];
   // 1. read schemaObject, read targetObject[]
-  const schema: unknown = (await readYAMLs(schemaPath))[0].obj;
-  const targets: { path: string; obj: unknown }[] = await readYAMLs(targetPath);
+  const schema: unknown = (await readYAMLJSONs(schemaPath))[0].obj;
+  const targets: { path: string; obj: unknown }[] =
+    await readYAMLJSONs(targetPath);
 
   // 2. General YAML validation
   let isValid = validate_and_print(schema, targets);

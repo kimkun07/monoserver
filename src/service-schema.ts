@@ -1,10 +1,18 @@
+import schemaJson from "../service-schema.json";
 import { FromSchema } from "json-schema-to-ts";
 import assert from "assert";
-import schemaJson from "./service-schema.json";
-import { readYAMLs } from "./util";
-import { assert_valid } from "./yaml-validator";
+import { readYAMLJSONs } from "./yaml/util_read";
+import { assert_valid } from "./yaml/yaml_validator";
 
-// #region Defining the schema
+/** Read a single yaml file to a service object */
+export async function readService(yamlPath: string): Promise<Service> {
+  const service: unknown = (await readYAMLJSONs(yamlPath))[0];
+  if (!validateService(service)) {
+    throw new Error(`YAML FILE ${yamlPath} does not match the schema`);
+  }
+  return service;
+}
+
 export const schemaObject = {
   type: "object",
   properties: {
@@ -58,9 +66,8 @@ assert.deepStrictEqual(
   /**expected=*/ schemaJson,
   "Schema defined in .json and .ts files must be identical",
 );
-//#endregion
 
-export function validateService(service: unknown): service is Service {
+function validateService(service: unknown): service is Service {
   try {
     assert_valid(schemaObject, service);
     return true;
@@ -74,13 +81,4 @@ export function validateService(service: unknown): service is Service {
     }
     return false;
   }
-}
-
-/** Read a single yaml file to a service object */
-export async function readService(yamlPath: string): Promise<Service> {
-  const service: unknown = (await readYAMLs(yamlPath))[0];
-  if (!validateService(service)) {
-    throw new Error(`YAML FILE ${yamlPath} does not match the schema`);
-  }
-  return service;
 }

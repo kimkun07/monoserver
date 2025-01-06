@@ -1,5 +1,5 @@
 import { writeFile } from "fs/promises";
-import { readService, type Service } from "./src/service-schema";
+import { readService, type Service } from "./src/service_schema";
 
 function generateServerBlock(service: Service): string {
   return `server {

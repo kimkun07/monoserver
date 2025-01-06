@@ -1,5 +1,5 @@
 import { executeCommand } from "./src/container/util_exec";
-import { readService, type Service } from "./src/service-schema";
+import { readService, type Service } from "./src/service_schema";
 
 async function startContainer(service: Service): Promise<void> {
   try {

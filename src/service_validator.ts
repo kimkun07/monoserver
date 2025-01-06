@@ -4,7 +4,7 @@
 
 import { readYAMLJSONs } from "./yaml/util_read";
 import { validate_and_print } from "./yaml/yaml_validator";
-import { schemaObject as schema, type Service } from "./service-schema";
+import { schemaObject as schema, type Service } from "./service_schema";
 
 async function main(targetPath: string) {
   // 1. read targetObject[]

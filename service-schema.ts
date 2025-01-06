@@ -1,9 +1,9 @@
-import { readFile } from "fs/promises";
-import Ajv, { ValidateFunction } from "ajv";
-import { load } from "js-yaml";
+import { ErrorObject } from "ajv";
 import { FromSchema } from "json-schema-to-ts";
 import assert from "assert";
-import schemaJson from "./service-schema.json";
+import schemaJson from "./service-schema.json" assert { type: "json" };
+import { readYAML } from "./util";
+import { assert_valid } from "./validate-yaml";
 
 // #region Defining the schema
 const schemaObject = {
@@ -59,45 +59,25 @@ assert.deepStrictEqual(
   /**expected=*/ schemaJson,
   "Schema defined in .json and .ts files must be identical"
 );
-// #endregion
-
-async function readYAML(yamlPath: string): Promise<unknown> {
-  if (!yamlPath) {
-    throw new Error("Please provide a YAML file path");
-  }
-
-  try {
-    const yamlContent = await readFile(yamlPath, "utf8");
-    return load(yamlContent);
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Failed to read YAML file ${yamlPath}: ${error.message}`);
-    }
-    throw new Error(`Failed to read YAML file ${yamlPath}: ${error}`);
-  }
-}
+//#endregion
 
 export function validateService(service: unknown): service is Service {
-  const ajv = new Ajv();
-  const validate: ValidateFunction = ajv.compile(schemaObject);
-  const valid: boolean = validate(service);
-  if (!valid) {
-    console.error(validate.errors);
+  try {
+    assert_valid(schemaObject, service);
+    return true;
+  } catch (error) {
+    error = error as ErrorObject[];
+    for (const err of error) {
+      console.error(err);
+    }
+    return false;
   }
-  return valid;
 }
 
 export async function readService(yamlPath: string): Promise<Service> {
-  try {
-    const service: unknown = await readYAML(yamlPath);
-    if (!validateService(service)) {
-      throw new Error(`YAML FILE ${yamlPath} does not match the schema`);
-    }
-    return service;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Invalid service schema: ${error.message}`);
-    }
-    throw new Error("Failed to parse service configuration");
+  const service: unknown = await readYAML(yamlPath);
+  if (!validateService(service)) {
+    throw new Error(`YAML FILE ${yamlPath} does not match the schema`);
   }
+  return service;
 }

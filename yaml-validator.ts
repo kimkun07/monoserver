@@ -1,5 +1,5 @@
 // General yaml validator
-import Ajv, { ValidateFunction } from "ajv";
+import Ajv, { ValidateFunction, JSONSchemaType, AnySchema } from "ajv";
 import { readYAMLs } from "./util";
 import { Service } from "./service-schema";
 
@@ -9,7 +9,7 @@ const ajv = new Ajv({
 
 /** throw Error(schema is invalid) or ErrorObject[](data is invalid) */
 export function assert_valid(schema: unknown, data: unknown): boolean {
-  const validate: ValidateFunction = ajv.compile(schema);
+  const validate: ValidateFunction = ajv.compile(schema as AnySchema);
   const valid: boolean = validate(data);
   if (!valid) {
     throw validate.errors;

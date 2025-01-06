@@ -5,7 +5,7 @@ import { readYAMLs } from "./util";
 import { assert_valid } from "./yaml-validator";
 
 // #region Defining the schema
-const schemaObject = {
+export const schemaObject = {
   type: "object",
   properties: {
     container: {

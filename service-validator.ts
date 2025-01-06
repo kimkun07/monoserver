@@ -1,14 +1,13 @@
-// usage: validate [schema file] [target]
+// usage: service-validator [schema file] [target]
 //        target can be a directory or a file
-//   e.g. validate ./service-schema.json ./services
+//   e.g. service-validator ./service-schema.json ./services
 
 import { readYAMLs } from "./util.ts";
 import { validate_and_print } from "./yaml-validator.ts";
-import { Service } from "./service-schema.ts";
+import { schemaObject as schema, type Service } from "./service-schema.ts";
 
-async function main(schemaPath: string, targetPath: string) {
-  // 1. read schemaObject, read targetObject[]
-  const schema: unknown = (await readYAMLs(schemaPath))[0].obj;
+async function main(targetPath: string) {
+  // 1. read targetObject[]
   const targets: { path: string; obj: unknown }[] = await readYAMLs(targetPath);
 
   // 2. General YAML validation
@@ -96,4 +95,4 @@ function printDuplicates(check: DuplicateCheck) {
   return hasDuplicates;
 }
 
-main(process.argv[2], process.argv[3]);
+main(process.argv[2]);

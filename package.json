@@ -8,7 +8,7 @@
     "stop": "tsx stop_container_by_yaml.ts ./services/aigen.yaml",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "validate-yaml": "tsx validate-yaml.ts ./service-schema.json ./services"
+    "validate-services": "tsx service-validator.ts ./services"
   },
   "dependencies": {
     "ajv": "^8.17.1",

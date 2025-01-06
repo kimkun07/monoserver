@@ -46,13 +46,13 @@ async function read_YAML_JSON_file(path: string): Promise<unknown> {
   }
 }
 
-export type ReadResult = { path: string; obj: unknown };
-
 /** Read all yaml files in a directory to objects */
-export async function readYAMLs(path: string): Promise<ReadResult[]> {
+export async function readYAMLs(
+  path: string,
+): Promise<{ path: string; obj: unknown }[]> {
   const stats = await stat(path);
   if (stats.isDirectory()) {
-    let targets: ReadResult[] = [];
+    let targets: { path: string; obj: unknown }[] = [];
     const entries: Dirent[] = await readdir(path, {
       withFileTypes: true,
     });

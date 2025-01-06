@@ -1,9 +1,9 @@
 import { executeCommand } from "./src/container/util_exec";
-import { readService, type Service } from "./src/service-schema";
+import { readService } from "./src/service-schema";
 
 async function startContainer(path: string): Promise<void> {
   try {
-    const service: Service = readService(path);
+    const service = await readService(path);
 
     // Replace placeholder to value
     let script = service.container.script;

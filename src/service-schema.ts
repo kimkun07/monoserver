@@ -6,11 +6,11 @@ import { assert_valid } from "./yaml/yaml_validator";
 
 /** Read a single yaml file to a service object */
 export async function readService(yamlPath: string): Promise<Service> {
-  const service: unknown = (await readYAMLJSONs(yamlPath))[0];
-  if (!validateService(service)) {
-    throw new Error(`YAML FILE ${yamlPath} does not match the schema`);
+  const { obj } = (await readYAMLJSONs(yamlPath))[0];
+  if (!validateService(obj)) {
+    throw new Error(`YAML file ${yamlPath} does not match the schema`);
   }
-  return service;
+  return obj;
 }
 
 export const schemaObject = {

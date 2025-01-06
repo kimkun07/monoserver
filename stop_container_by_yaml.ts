@@ -3,7 +3,7 @@ import { readService } from "./src/service-schema";
 
 async function stopAndRemoveContainer(path: string): Promise<void> {
   try {
-    const service = readService(path);
+    const service = await readService(path);
     const name = service.container.name;
 
     const { stdout: containerId } = await executeCommand(

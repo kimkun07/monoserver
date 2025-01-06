@@ -1,9 +1,8 @@
-import { ErrorObject } from "ajv";
 import { FromSchema } from "json-schema-to-ts";
 import assert from "assert";
-import schemaJson from "./service-schema.json" assert { type: "json" };
-import { readYAML } from "./util";
-import { assert_valid } from "./validate-yaml";
+import schemaJson from "./service-schema.json";
+import { readYAMLs } from "./util";
+import { assert_valid } from "./yaml-validator";
 
 // #region Defining the schema
 const schemaObject = {
@@ -66,16 +65,20 @@ export function validateService(service: unknown): service is Service {
     assert_valid(schemaObject, service);
     return true;
   } catch (error) {
-    error = error as ErrorObject[];
-    for (const err of error) {
-      console.error(err);
+    if (Array.isArray(error)) {
+      for (const err of error) {
+        console.error(err);
+      }
+    } else {
+      console.error(error);
     }
     return false;
   }
 }
 
+/** Read a single yaml file to a service object */
 export async function readService(yamlPath: string): Promise<Service> {
-  const service: unknown = await readYAML(yamlPath);
+  const service: unknown = (await readYAMLs(yamlPath))[0];
   if (!validateService(service)) {
     throw new Error(`YAML FILE ${yamlPath} does not match the schema`);
   }

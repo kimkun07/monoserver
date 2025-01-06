@@ -1,67 +1,99 @@
 // usage: validate [schema file] [target]
 //        target can be a directory or a file
 //   e.g. validate ./service-schema.json ./services
-import path from "path";
-import { stat, readdir } from "fs/promises";
-import Ajv, { ValidateFunction, ErrorObject } from "ajv";
-import { readYAML } from "./util";
 
-const ajv = new Ajv({
-  allowUnionTypes: true,
-});
+import { readYAMLs } from "./util.ts";
+import { validate_and_print } from "./yaml-validator.ts";
+import { Service } from "./service-schema.ts";
 
-export function assert_valid(schema: unknown, data: unknown): boolean {
-  const validate: ValidateFunction = ajv.compile(schema);
-  const valid: boolean = validate(data);
-  if (!valid) {
-    // throw ErrorObject[]
-    throw validate.errors;
+async function main(schemaPath: string, targetPath: string) {
+  // 1. read schemaObject, read targetObject[]
+  const schema: unknown = (await readYAMLs(schemaPath))[0].obj;
+  const targets: { path: string; obj: unknown }[] = await readYAMLs(targetPath);
+
+  // 2. General YAML validation
+  const isValidYAML = validate_and_print(schema, targets);
+  if (!isValidYAML) {
+    process.exit(1);
   }
-  return valid;
+
+  // 3. Check for duplicate service names, subdomains, and ports
+  const duplicates = checkDuplicates(targets);
+  const hasDuplicates = printDuplicates(duplicates);
+
+  // Exit with error if duplicates were found
+  process.exit(hasDuplicates ? 1 : 0);
 }
 
-// 1. Validate services/**/*.yaml files
-async function validate_by_file(schemaPath: string, targetPath: string) {
-  const schema = await readYAML(schemaPath);
-  const stats = await stat(targetPath);
+type DuplicateCheck = {
+  containerNames: Map<string, string[]>;
+  subdomains: Map<string, string[]>;
+  ports: Map<number, string[]>;
+};
 
-  if (stats.isDirectory()) {
-    const entries = await readdir(targetPath, { withFileTypes: true });
-    for (const entry of entries) {
-      const fullPath = path.join(targetPath, entry.name);
-      if (entry.isDirectory()) {
-        // recursive search
-        await validate_by_file(schemaPath, fullPath);
-      } else if (entry.isFile()) {
-        if (/\.(yml|yaml|json)$/i.test(entry.name)) {
-          // validate only yaml or json files
-          const target = await readYAML(fullPath);
-          try {
-            assert_valid(schema, target);
-            console.log(`${fullPath}: ✅`);
-          } catch (error) {
-            console.error(`${fullPath}: ❌`);
+function checkDuplicates(services: { path: string; obj: Service }[]) {
+  const check: DuplicateCheck = {
+    containerNames: new Map(),
+    subdomains: new Map(),
+    ports: new Map(),
+  };
 
-            error = error as ErrorObject[];
-            for (const err of error) {
-              console.error(err);
-            }
-          }
-        }
-      }
+  for (const { path, obj } of services) {
+    const service = obj;
+
+    // Check container name
+    const name = service.container.name;
+    const paths = check.containerNames.get(name) || [];
+    check.containerNames.set(name, [...paths, path]);
+
+    // Check subdomain
+    const subdomain = service.nginx.subdomain;
+    const subdomainPaths = check.subdomains.get(subdomain) || [];
+    check.subdomains.set(subdomain, [...subdomainPaths, path]);
+
+    // Check port
+    const port = service.container.port;
+    const portPaths = check.ports.get(port) || [];
+    check.ports.set(port, [...portPaths, path]);
+  }
+
+  return check;
+}
+
+function printDuplicates(check: DuplicateCheck) {
+  let hasDuplicates = false;
+
+  // Print container name duplicates
+  for (const [name, paths] of check.containerNames.entries()) {
+    if (paths.length > 1) {
+      hasDuplicates = true;
+      console.error();
+      console.error(`Duplicate container name "${name}":`);
+      paths.forEach((path: string) => console.error(`- ${path}`));
     }
-    return true;
-  } else {
-    // targetPath is a single file
-    const target = await readYAML(targetPath);
-    const isValid = assert_valid(schema, target);
-    console.log(`${targetPath}: ${isValid ? "✅" : "❌"}`);
-    return isValid;
   }
+
+  // Print subdomain duplicates
+  for (const [subdomain, paths] of check.subdomains) {
+    if (paths.length > 1) {
+      hasDuplicates = true;
+      console.error();
+      console.error(`Duplicate subdomain "${subdomain}":`);
+      paths.forEach((path: string) => console.error(`- ${path}`));
+    }
+  }
+
+  // Print port duplicates
+  for (const [port, paths] of check.ports) {
+    if (paths.length > 1) {
+      hasDuplicates = true;
+      console.error();
+      console.error(`Duplicate port "${port}":`);
+      paths.forEach((path: string) => console.error(`- ${path}`));
+    }
+  }
+
+  return hasDuplicates;
 }
 
-// 2. Check for duplicate service names, subdomains, and ports
-
-// 3. Make result simliar to eslint
-
-validate_by_file(process.argv[2], process.argv[3]);
+main(process.argv[2], process.argv[3]);

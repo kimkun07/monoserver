@@ -2,8 +2,8 @@
 //        target can be a directory or a file
 //   e.g. service-validator ./services
 
-import { readYAMLJSONs } from "./yaml/util_read";
-import { validate_all } from "./yaml/yaml_validator";
+import { readYAMLJSONs } from "../yaml/util_read";
+import { validate_all } from "../yaml/yaml_validator";
 import { schemaObject as schema, type Service } from "./service_schema";
 
 export function validate_all_services(

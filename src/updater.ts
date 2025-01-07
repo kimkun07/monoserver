@@ -5,9 +5,9 @@ import {
   start_container,
   stop_remove_container,
 } from "./container/util_docker";
-import { type Service } from "./service_schema";
+import { type Service } from "./service/service_schema";
 import deep_equal from "deep-equal";
-import { readServices } from "./util_service_read";
+import { readServices } from "./service/util_service_read";
 import { executeCommand } from "./container/util_exec";
 import { cp } from "fs/promises";
 
@@ -21,6 +21,7 @@ async function update_containers(
 ) {
   let running_desired_containers: Map<string, ServiceFile> = new Map();
 
+  // TODO: parallelize
   // 1. Find desired_service for existing container
   //    Also, delete not-desired containers
   for (const container_name of existing_containers) {
@@ -140,5 +141,3 @@ export async function main(
     }
   }
 }
-
-main("./services", "./services_old");

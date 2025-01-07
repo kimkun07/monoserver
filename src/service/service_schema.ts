@@ -1,7 +1,7 @@
-import schemaJson from "../service-schema.json";
+import schemaJson from "../../service-schema.json";
 import { FromSchema } from "json-schema-to-ts";
 import assert from "assert";
-import { assert_valid } from "./yaml/yaml_validator";
+import { assert_valid } from "../yaml/yaml_validator";
 
 export const schemaObject = {
   type: "object",

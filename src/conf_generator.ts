@@ -1,6 +1,6 @@
 import { mkdir, rm, writeFile } from "fs/promises";
-import { type Service } from "./service_schema";
-import { readServices } from "./util_service_read";
+import { type Service } from "./service/service_schema";
+import { readServices } from "./service/util_service_read";
 
 function generateServerBlock(service: Service): string {
   return `server {

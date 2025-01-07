@@ -1,4 +1,4 @@
-import type { Service } from "../service_schema";
+import type { Service } from "../service/service_schema";
 import { executeCommand } from "./util_exec";
 
 type Container = Service["container"];

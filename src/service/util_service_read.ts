@@ -1,6 +1,6 @@
 import { Service, validateService } from "./service_schema";
 import { validate_all_services } from "./service_validator";
-import { readYAMLJSONs } from "./yaml/util_read";
+import { readYAMLJSONs } from "../yaml/util_read";
 
 /** Read all yaml files to service objects */
 export async function readServices(

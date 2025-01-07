@@ -23,7 +23,7 @@ export function validate_all_services(
   return validYAML && no_duplicates;
 }
 
-async function main(targetPath: string) {
+export async function main(targetPath: string) {
   const targets: { path: string; obj: unknown }[] =
     await readYAMLJSONs(targetPath);
 
@@ -100,5 +100,3 @@ function has_duplicates(
 
   return hasDuplicates;
 }
-
-main(process.argv[2]);

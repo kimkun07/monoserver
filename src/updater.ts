@@ -1,11 +1,15 @@
 import {
+  ContainerStatus,
   get_all_containers,
+  get_container_status,
   start_container,
   stop_remove_container,
 } from "./container/util_docker";
 import { type Service } from "./service_schema";
 import deep_equal from "deep-equal";
 import { readServices } from "./util_service_read";
+import { executeCommand } from "./container/util_exec";
+import { cp } from "fs/promises";
 
 type ServiceFile = { path: string; service: Service };
 
@@ -17,7 +21,8 @@ async function update_containers(
 ) {
   let running_desired_containers: Map<string, ServiceFile> = new Map();
 
-  // 1. Delete not-desired running containers
+  // 1. Find desired_service for existing container
+  //    Also, delete not-desired containers
   for (const container_name of existing_containers) {
     // Find services with same name
     const serviceFile = desired_services.find(
@@ -92,16 +97,48 @@ async function update_containers(
   }
 }
 
-async function test(servicesDirectory: string, oldServicesDirectory: string) {
-  // Get running/stopped containers, exclude nginx container
-  const existing_containers = (await get_all_containers()).filter(
-    (name) => !(name === "nginx"),
-  );
+export async function main(
+  desired_services_dir: string,
+  old_services_dir: string,
+) {
+  // 1. git pull -> ./services and ./nginx will be updated
+  await executeCommand("git pull");
 
-  let desired_services: ServiceFile[] = await readServices(servicesDirectory);
-  let old_services: ServiceFile[] = await readServices(oldServicesDirectory);
+  // 2. update containers
+  // existing_containers: running/stopped containers
+  const existing_containers = await get_all_containers();
 
+  let desired_services: ServiceFile[] =
+    await readServices(desired_services_dir);
+  let old_services: ServiceFile[] = [];
+  try {
+    old_services = await readServices(old_services_dir);
+  } catch (error) {
+    if (error instanceof Object && "code" in error && error.code === "ENOENT") {
+      // Ignore "directory not found" error
+      old_services = [];
+    } else {
+      throw error;
+    }
+  }
   await update_containers(existing_containers, desired_services, old_services);
+
+  // 3. Preserve desired_services files as old_services
+  await cp(desired_services_dir, old_services_dir, { recursive: true });
+
+  // 4. signal nginx container to reload
+  //    -> changes in ./nginx will be applied
+  const nginx_status = await get_container_status("nginx");
+  if (nginx_status === ContainerStatus.not_found) {
+    console.warn("There is no 'nginx' container.");
+  } else if (nginx_status === ContainerStatus.running) {
+    try {
+      await executeCommand("docker exec nginx nginx -s reload");
+    } catch (error) {
+      console.error("Error while reloading nginx:", error);
+      throw error;
+    }
+  }
 }
 
-test("./services", "./services");
+main("./services", "./services_old");

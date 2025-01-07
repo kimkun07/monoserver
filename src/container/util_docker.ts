@@ -56,3 +56,28 @@ export async function get_all_containers(): Promise<string[]> {
   names = names.filter((name) => name !== "");
   return names;
 }
+
+export enum ContainerStatus {
+  created = "created",
+  restarting = "restarting",
+  running = "running",
+  paused = "paused",
+  exited = "exited",
+  dead = "dead",
+  not_found = "not found",
+}
+
+export async function get_container_status(
+  name: string,
+): Promise<ContainerStatus> {
+  try {
+    const { stdout } = await executeCommand(
+      `docker inspect --format '{{.State.Status}}' ${name}`,
+    );
+    return stdout.trim() as ContainerStatus;
+  } catch (error) {
+    // template parsing error: executing "" at <.State.Status>
+    // -> No such container
+    return ContainerStatus.not_found;
+  }
+}

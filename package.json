@@ -9,8 +9,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "validate-services": "tsx ./main.ts validate-services ./services",
-    "update-config-files": "tsx ./main.ts update-config-files ./services ./nginx/conf.d",
-    "update-containers": "tsx ./main.ts update-containers ./services ./services_old"
+    "update-conf-files": "tsx ./main.ts update-conf-files ./services ./nginx/conf.d",
+    "update-on-server": "tsx ./main.ts update-on-server ./services ./services_old"
   },
   "dependencies": {
     "ajv": "^8.17.1",

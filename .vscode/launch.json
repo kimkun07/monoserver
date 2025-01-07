@@ -10,7 +10,7 @@
       "request": "launch",
       // Debug current file in VSCode
       "program": "${file}",
-      "runtimeExecutable": "tsx", // Path to tsx binary
+      "runtimeExecutable": "/home/wsl/Develop-WSL/monoserver/node_modules/tsx/node_modules/.bin/tsx", // Path to tsx binary
       "skipFiles": [
         "<node_internals>/**", // Node.js internal core modules
         "${workspaceFolder}/node_modules/**" // Ignore all dependencies (optional)

@@ -1,17 +1,7 @@
 import schemaJson from "../service-schema.json";
 import { FromSchema } from "json-schema-to-ts";
 import assert from "assert";
-import { readYAMLJSONs } from "./yaml/util_read";
 import { assert_valid } from "./yaml/yaml_validator";
-
-/** Read a single yaml file to a service object */
-export async function readService(yamlPath: string): Promise<Service> {
-  const { obj } = (await readYAMLJSONs(yamlPath))[0];
-  if (!validateService(obj)) {
-    throw new Error(`YAML file ${yamlPath} does not match the schema`);
-  }
-  return obj;
-}
 
 export const schemaObject = {
   type: "object",
@@ -67,7 +57,7 @@ assert.deepEqual(
   "Schema defined in .json and .ts files must be identical",
 );
 
-function validateService(service: unknown): service is Service {
+export function validateService(service: unknown): service is Service {
   try {
     assert_valid(schemaObject, service);
     return true;

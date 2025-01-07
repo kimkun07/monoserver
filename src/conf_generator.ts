@@ -1,7 +1,6 @@
 import { mkdir, rm, writeFile } from "fs/promises";
 import { type Service } from "./service_schema";
-import { readYAMLJSONs } from "./yaml/util_read";
-import { validate_all_services } from "./service_validator";
+import { readServices } from "./util_service_read";
 
 function generateServerBlock(service: Service): string {
   return `server {
@@ -31,17 +30,19 @@ async function generateConfigFile(service: Service, createAt: string) {
   await writeFile(fullPath, serverBlock);
 }
 
+/**Generate nginx configuration files from service files.
+ * @param servicesDirectory Directory (recursively) containing service files
+ * @param configsDirectory Directory to save the configuration files (flattened)
+ * @example await renew_config_files_by_yaml("./services", "./nginx/conf.d");
+ *          ./services/service1.yaml     -> ./nginx/conf.d/service1.conf
+ *          ./services/.../service1.yaml -> ./nginx/conf.d/service1.conf
+ */
 async function renew_config_files_by_yaml(
   servicesDirectory: string,
   configsDirectory: string,
 ) {
-  const services: { path: string; obj: unknown }[] =
-    await readYAMLJSONs(servicesDirectory);
-  if (!validate_all_services(services, false)) {
-    throw new Error(
-      "There are invalid service files. Try 'pnpm validate-services' first.",
-    );
-  }
+  const services: { path: string; service: Service }[] =
+    await readServices(servicesDirectory);
 
   // 1. Delete all configuration files
   try {
@@ -56,8 +57,8 @@ async function renew_config_files_by_yaml(
 
   // 2. Create all configuration files
   await mkdir(configsDirectory);
-  for (const { obj } of services) {
-    await generateConfigFile(obj, configsDirectory);
+  for (const { service } of services) {
+    await generateConfigFile(service, configsDirectory);
   }
 }
 

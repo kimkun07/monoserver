@@ -21,7 +21,7 @@ export async function readYAMLJSONs(
         targets.concat(await readYAMLJSONs(fullPath));
       } else if (entry.isFile()) {
         if (/\.(yml|yaml|json)$/i.test(entry.name)) {
-          const content = await read_YAML_JSON_file(fullPath);
+          const content = await readYAMLJSON(fullPath);
           targets.push({ path: fullPath, obj: content });
         }
       }
@@ -29,13 +29,13 @@ export async function readYAMLJSONs(
     return targets;
   } else {
     // targetPath is a single file
-    const content = await read_YAML_JSON_file(path);
+    const content = await readYAMLJSON(path);
     return [{ path: path, obj: content }];
   }
 }
 
 /** Read single YAML/JSON file to object */
-async function read_YAML_JSON_file(path: string): Promise<unknown> {
+export async function readYAMLJSON(path: string): Promise<unknown> {
   if (!path) {
     throw new Error("Please provide a YAML/JSON file path");
   }

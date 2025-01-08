@@ -2,9 +2,13 @@
 //        target can be a directory or a file
 //   e.g. service-validator ./services
 
+import { schema, type Service } from "@repo/service/service";
 import { readYAMLJSONs } from "../yaml/util_read";
-import { validate_all } from "../yaml/yaml_validator";
-import { schemaObject as schema, type Service } from "./service_schema";
+import { validate, validate_all } from "../yaml/yaml_validator";
+
+export function validate_service(service: unknown): service is Service {
+  return validate<Service>(schema, service);
+}
 
 export function validate_all_services(
   targets: { path: string; obj: unknown }[],

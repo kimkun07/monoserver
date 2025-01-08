@@ -6,27 +6,35 @@ const ajv = new Ajv({
   allowUnionTypes: true,
 });
 
-/** throw Error(schema is invalid) or ErrorObject[](data is invalid) */
-export function assert_valid(schema: unknown, data: unknown): boolean {
-  const validate: ValidateFunction = ajv.compile(schema as AnySchema);
-  const valid: boolean = validate(data);
-  if (!valid) {
-    throw validate.errors;
+export function validate<T>(schema: unknown, data: unknown): data is T {
+  try {
+    // throw Error(schema is invalid) or ErrorObject[](data is invalid)
+    const validate: ValidateFunction = ajv.compile(schema as AnySchema);
+    const valid: boolean = validate(data);
+    return valid;
+  } catch (error) {
+    if (Array.isArray(error)) {
+      for (const err of error) {
+        console.error(err);
+      }
+    } else {
+      console.error(error);
+    }
+    return false;
   }
-  return valid;
 }
 
 /** Validate and print the result */
 export function validate_all<T>(
   schema: unknown,
-  targets: { path: string; obj: unknown }[],
+  data_array: { path: string; obj: unknown }[],
   print_errors: boolean = false,
-): targets is { path: string; obj: T }[] {
+): data_array is { path: string; obj: T }[] {
   let allValid = true;
 
-  for (const target of targets) {
+  for (const target of data_array) {
     try {
-      assert_valid(schema, target.obj);
+      validate(schema, target.obj);
       if (print_errors) {
         console.log(`${target.path} ✅`);
       }

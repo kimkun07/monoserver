@@ -1,4 +1,4 @@
-import { Service, validateService } from "./service_schema";
+import { Service } from "./service_schema";
 import { validate_all_services } from "./service_validator";
 import { readYAMLJSONs } from "../yaml/util_read";
 

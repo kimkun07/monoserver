@@ -1,0 +1,13 @@
+{
+  "name": "@repo/service",
+  "exports": {
+    "./service": "./service.ts"
+  },
+  "dependencies": {
+    "json-schema-to-ts": "^3.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@repo/typescript-config": "workspace:*"
+  }
+}

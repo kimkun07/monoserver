@@ -1,9 +1,8 @@
-import schemaJson from "../../service-schema.json";
+import schema_from_json from "./service-schema.json";
 import { FromSchema } from "json-schema-to-ts";
 import assert from "assert";
-import { assert_valid } from "../yaml/yaml_validator";
 
-export const schemaObject = {
+export const schema = {
   type: "object",
   properties: {
     container: {
@@ -46,29 +45,13 @@ export const schemaObject = {
   required: ["container", "nginx", "display"],
 } as const;
 
-export type Service = FromSchema<typeof schemaObject>;
+export type Service = FromSchema<typeof schema>;
 
 // Assure that two sources of truth are in sync:
 // 1. service-schema.json file
 // 2. service-schema.ts file
 assert.deepEqual(
-  /**actual=*/ schemaObject,
-  /**expected=*/ schemaJson,
+  /**actual=*/ schema,
+  /**expected=*/ schema_from_json,
   "Schema defined in .json and .ts files must be identical",
 );
-
-export function validateService(service: unknown): service is Service {
-  try {
-    assert_valid(schemaObject, service);
-    return true;
-  } catch (error) {
-    if (Array.isArray(error)) {
-      for (const err of error) {
-        console.error(err);
-      }
-    } else {
-      console.error(error);
-    }
-    return false;
-  }
-}

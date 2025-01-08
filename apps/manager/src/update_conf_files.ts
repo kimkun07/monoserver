@@ -1,5 +1,5 @@
+import { type Service } from "@repo/service/service";
 import { mkdir, rm, writeFile } from "fs/promises";
-import { type Service } from "./service/service_schema";
 import { readServices } from "./service/util_service_read";
 
 /**Generate nginx configuration files from service files.

@@ -1,5 +1,5 @@
-import { Service } from "./service_schema";
-import { validate_all_services } from "./service_validator";
+import { type Service } from "@repo/service/service";
+import { validate_all_services, validate_service } from "./service_validator";
 import { readYAMLJSONs } from "../yaml/util_read";
 
 /** Read all yaml files to service objects */
@@ -19,7 +19,7 @@ export async function readServices(
 /** Read a single yaml file to a service object */
 export async function readService(path: string): Promise<Service> {
   const { obj } = (await readYAMLJSONs(path))[0];
-  if (!validateService(obj)) {
+  if (!validate_service(obj)) {
     throw new Error(`YAML file ${path} does not match the schema`);
   }
   return obj;

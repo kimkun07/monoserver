@@ -5,7 +5,7 @@ import {
   start_container,
   stop_remove_container,
 } from "./container/util_docker";
-import { type Service } from "./service/service_schema";
+import { type Service } from "@repo/service/service";
 import deep_equal from "deep-equal";
 import { readServices } from "./service/util_service_read";
 import { executeCommand } from "./container/util_exec";

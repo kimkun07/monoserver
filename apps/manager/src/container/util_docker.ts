@@ -3,7 +3,8 @@ import { executeCommand } from "./util_exec";
 
 type Container = Service["container"];
 
-export async function start_container(container: Container): Promise<void> {
+/** Create and run a new container from an image */
+export async function run_container(container: Container): Promise<void> {
   try {
     // Replace placeholder to value
     let script = container.script;
@@ -20,6 +21,18 @@ export async function start_container(container: Container): Promise<void> {
       error instanceof Error ? error.message : String(error),
     );
     process.exit(1);
+  }
+}
+
+/** Start stopped container */
+export async function start_container(name: string): Promise<void> {
+  try {
+    await executeCommand(`docker start ${name}`);
+  } catch (error) {
+    console.error(
+      "Error:",
+      error instanceof Error ? error.message : String(error),
+    );
   }
 }
 

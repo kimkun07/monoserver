@@ -2,6 +2,7 @@ import {
   ContainerStatus,
   get_all_containers,
   get_container_status,
+  run_container,
   start_container,
   stop_remove_container,
 } from "./container/util_docker";
@@ -60,13 +61,18 @@ async function update_containers(
     }
   }
 
-  // 3. Run modified containers
-  for (const container_name of modified_containers) {
-    const serviceFile = running_desired_containers.get(container_name);
-    if (serviceFile === undefined) {
-      throw new Error("Service file not found for modified container");
+  // 3. Run not-running containers
+  //    modified / existing but not running
+  for (const [
+    container_name,
+    serviceFile,
+  ] of running_desired_containers.entries()) {
+    const status = await get_container_status(container_name);
+    if (status === ContainerStatus.not_found) {
+      await run_container(serviceFile.service.container);
+    } else if (status === ContainerStatus.exited) {
+      await start_container(serviceFile.service.container.name);
     }
-    await start_container(serviceFile.service.container);
   }
 
   // 4. Run added containers
@@ -76,7 +82,7 @@ async function update_containers(
     const container_name = service.container.name;
     if (!running_desired_containers.has(container_name)) {
       added_containers.push(container_name);
-      await start_container(service.container);
+      await run_container(service.container);
       running_desired_containers.set(container_name, { path, service });
     }
   }

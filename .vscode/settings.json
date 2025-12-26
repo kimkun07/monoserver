@@ -1,5 +1,0 @@
-{
-  "yaml.schemas": {
-    "./service-schema.json": ["services/*.yaml"]
-  }
-}

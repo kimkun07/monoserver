@@ -1,9 +1,0 @@
-{
-  "extends": "@tsconfig/recommended/tsconfig.json",
-  "compilerOptions": {
-    "resolveJsonModule": true, // Allow JSON modules to be imported
-    "esModuleInterop": true, // Use correct ESM import behavior
-    "allowImportingTsExtensions": true,
-    "noEmit": true
-  }
-}

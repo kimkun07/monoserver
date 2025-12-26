@@ -1,0 +1,12 @@
+services:
+  nginx-main: # [monoserver] Should not change name `nginx-main`
+    image: nginx:1.27.3
+    ports:
+    - "80:80"
+    volumes:
+    - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    - ./nginx/conf.d:/etc/nginx/conf.d:ro
+  
+  hello:
+    image: hashicorp/http-echo
+    command: ["-text=Hello from http-echo container!"]

@@ -15,7 +15,7 @@
 
 | Task | 상태 | 우선순위 | 파일 |
 |------|------|---------|------|
-| Nginx Config Generator | 🟡 준비중 | P0 | `nginx-conf-generator.md` |
+| Nginx Config Generator | ✅ 완료 | P0 | `nginx-conf-generator.md` |
 | GitHub Actions 워크플로우 | 🟡 준비중 | P0 | `github-action.md` |
 | Google Compute Engine 설정 | 🟡 준비중 | P0 | `google-compute-engine.md` |
 | 설치 가이드 및 스크립트 | 🟡 준비중 | P1 | `install-guide.md` |
@@ -48,9 +48,9 @@ install-guide.md (P1)
 ## 다음 작업
 
 클로드 코드가 수행해야 할 다음 작업:
-1. **`nginx-conf-generator.md` 읽기** - Nginx config 생성 스크립트 구현
-2. TypeScript로 `compose.yaml` 파싱 및 `.conf` 파일 생성 로직 작성
-3. 로컬에서 테스트 후 결과를 devlog에 기록
+1. **`github-action.md` 읽기** - GitHub Actions 워크플로우 설정
+2. compose.yaml 변경 시 자동으로 nginx-conf-generator 실행
+3. GCE 서버에 자동 배포되도록 워크플로우 작성
 
 ## 최근 업데이트
 
@@ -58,17 +58,17 @@ install-guide.md (P1)
 - ✅ README.md 초안 작성 완료
 - ✅ compose.yaml 기본 구조 설정
 - ✅ devlog 시스템 구축
-- 🟢 다음: nginx-conf-generator 구현 시작
+- ✅ nginx-conf-generator 완료 (v2.2): 데이터 기반 테스트, 자동 cleanup, 완전한 문서화
+- 🟢 다음: GitHub Actions 워크플로우 설정
 
 ## 참고 자료
 
 - 프로젝트 가이드: `/CLAUDE.md`
 - 현재 compose.yaml: `/compose.yaml`
 - Nginx 설정: `/nginx/nginx.conf`, `/nginx/conf.d/`
-- 기존 Manager CLI: `/apps/manager/` (참고용)
 
 ## 메모
 
 - Docker는 rootless 모드로 설치 예정
-- Nginx config는 자동 생성되므로 수동 편집 금지
+- nginx/conf.d 아래는 자동 생성되므로 수동 편집 금지
 - GitHub Actions는 `compose.yaml` 변경 시에만 트리거

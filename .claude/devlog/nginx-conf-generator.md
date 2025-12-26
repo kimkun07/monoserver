@@ -111,10 +111,11 @@ nginx-config-generator/
 
 **테스트 실행**:
 ```bash
-npm test  # 전체 테스트 자동 실행
+npm test              # 전체 테스트 자동 실행
+npm run test:clean    # 테스트 output 파일 전부 삭제 (test/*/nginx/conf.d)
 ```
 
-**다음 단계**: GitHub Action 설정
+**다음 단계**: ✅ 완료 → GitHub Action 설정으로 진행
 
 **블로커**: 없음
 

@@ -1,5 +1,5 @@
 services:
-  nginx-main: # [monoserver] Should not change name `nginx-main`
+  monoserver-nginx-main: # [monoserver] Should not change name `monoserver-nginx-main`
     image: nginx:1.27.3
     ports:
     - "80:80"
@@ -10,3 +10,4 @@ services:
   hello:
     image: hashicorp/http-echo
     command: ["-text=Hello from http-echo container!"]
+    x-monoserver-port: "5678"

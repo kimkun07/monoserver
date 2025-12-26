@@ -204,38 +204,106 @@ This prevents accidental deletion of wrong directories and ensures you're workin
 
 ## Testing
 
-The project includes a comprehensive test suite:
+The project includes a comprehensive data-driven test suite with 6 test cases:
 
 ```bash
+# Run all tests
 npm test
+
+# Clean test output files
+npm run test:clean
 ```
 
-The test suite:
-- Uses a test compose.yaml with multiple service configurations
-- Generates configs to a test output directory
-- Compares generated files with expected output
-- Reports any mismatches with detailed diffs
+**Note**: The test runner automatically cleans up output files before each test case, so old outputs don't interfere with new test runs. Generated `.conf` files remain after tests for inspection.
 
-Test files are located in:
-- `test/compose.yaml`: Test input file
-- `test/expected/`: Expected output files
-- `test/nginx/conf.d/`: Generated output (created during test)
+### Test Cases
+
+The test suite automatically discovers and runs all tests in `test/`:
+
+1. **01-missing-params**: Tests that all required CLI parameters must be provided
+2. **02-no-listen-ports**: Tests default listen port [80] when `x-monoserver-listen-ports` is omitted
+3. **03-with-listen-ports**: Tests multiple listen ports configuration
+4. **04-no-default-port**: Tests dynamic routing with `$server_port` when `x-monoserver-default-port` is omitted
+5. **05-with-default-port**: Tests fixed port routing when `x-monoserver-default-port` is specified
+6. **06-rename-main-service**: Tests that custom nginx service names are properly skipped
+
+### Test Structure
+
+Each test case is a directory under `test/` containing:
+- `test.json`: Test metadata (description, expected behavior, CLI parameters)
+- `compose.yaml`: Test input file
+- `expected/`: Directory with expected output `.conf` files
+- `nginx/nginx.conf`: Required for path validation (except for failure tests)
+
+Example `test.json`:
+```json
+{
+  "description": "Should use default listen port [80] when not specified",
+  "shouldFail": false,
+  "params": {
+    "composePath": "./compose.yaml",
+    "outputDir": "./nginx/conf.d",
+    "nginxService": "monoserver-nginx-main"
+  }
+}
+```
+
+For tests that should fail:
+```json
+{
+  "description": "Should fail when required parameters are missing",
+  "shouldFail": true,
+  "expectedError": "Missing required parameters",
+  "params": {
+    "outputDir": "./nginx/conf.d",
+    "nginxService": "monoserver-nginx-main"
+  }
+}
+```
+
+### Test Output
+
+After running tests, generated configuration files are preserved in each test case's `nginx/conf.d/` directory:
+- Files are automatically cleaned before each test run
+- Output files remain after tests for manual inspection
+- Use `npm run test:clean` to remove all test outputs manually
+
+Example output locations:
+- `test/02-no-listen-ports/nginx/conf.d/hello.conf`
+- `test/03-with-listen-ports/nginx/conf.d/hello.conf`
+- `test/03-with-listen-ports/nginx/conf.d/admin.conf`
 
 ## Project Structure
 
 ```
 nginx-config-generator/
 ├── src/
-│   ├── index.ts          # Main generator script
-│   └── test-runner.ts    # Test suite runner
-├── test/
-│   ├── compose.yaml      # Test input
-│   ├── nginx/
-│   │   └── nginx.conf    # Required for validation
-│   └── expected/         # Expected output files
-├── dist/                 # Compiled output (after build)
+│   ├── index.ts                   # Main generator script
+│   └── test-runner.ts             # Test suite orchestrator
+├── test/                          # Test cases (data-driven)
+│   ├── 01-missing-params/
+│   │   ├── test.json
+│   │   └── compose.yaml
+│   ├── 02-no-listen-ports/
+│   │   ├── test.json
+│   │   ├── compose.yaml
+│   │   ├── expected/
+│   │   │   └── hello.conf
+│   │   └── nginx/nginx.conf
+│   ├── 03-with-listen-ports/
+│   │   ├── test.json
+│   │   ├── compose.yaml
+│   │   ├── expected/
+│   │   │   ├── hello.conf
+│   │   │   └── admin.conf
+│   │   └── nginx/nginx.conf
+│   ├── 04-no-default-port/
+│   ├── 05-with-default-port/
+│   └── 06-rename-main-service/
+├── dist/                          # Compiled output (after build)
 ├── package.json
 ├── tsconfig.json
+├── .gitignore
 └── README.md
 ```
 

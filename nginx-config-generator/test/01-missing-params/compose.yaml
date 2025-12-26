@@ -1,0 +1,6 @@
+services:
+  monoserver-nginx-main:
+    image: nginx:latest
+
+  hello:
+    image: hello-world

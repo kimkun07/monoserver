@@ -5,4 +5,4 @@ node_modules
 dist
 
 # Test output (generated during test runs)
-test/nginx/conf.d
+test/*/nginx/conf.d

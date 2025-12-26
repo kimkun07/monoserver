@@ -1,0 +1,8 @@
+services:
+  monoserver-nginx-main:
+    image: nginx:latest
+
+  hello:
+    image: hello-world
+    x-monoserver-default-port: "3000"
+    x-monoserver-listen-ports: [80, 8080]

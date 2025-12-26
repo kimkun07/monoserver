@@ -1,0 +1,9 @@
+{
+  "description": "Should skip custom-named nginx service when specified via --nginx-service",
+  "shouldFail": false,
+  "params": {
+    "composePath": "./compose.yaml",
+    "outputDir": "./nginx/conf.d",
+    "nginxService": "my-custom-nginx"
+  }
+}

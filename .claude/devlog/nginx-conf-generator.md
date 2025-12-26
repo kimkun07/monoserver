@@ -58,6 +58,124 @@
 
 ## 클로드 코드 일기
 
+### 2025-12-26 - v2.2: 데이터 기반 테스트 구조 개편
+
+**상태**: ✅ 완료 (v2.2)
+
+**진행 내용**:
+- **테스트 구조 완전 개편**: 코드 기반 → 데이터 기반 테스트로 전환
+- **새로운 테스트 디렉토리**: `test/` 구조로 6개 테스트 케이스 재구성
+  1. `01-missing-params`: 필수 파라미터 누락 시 실패
+  2. `02-no-listen-ports`: listen ports 기본값 [80] 테스트
+  3. `03-with-listen-ports`: 여러 listen ports 테스트
+  4. `04-no-default-port`: $server_port 동적 라우팅
+  5. `05-with-default-port`: 고정 포트 사용
+  6. `06-rename-main-service`: 커스텀 nginx 서비스명 스킵
+- **test.json 메타데이터**: 각 테스트 케이스의 설정을 JSON으로 정의
+  - `shouldFail`: 에러 예상 여부를 데이터로 판별
+  - `expectedError`: 예상 에러 메시지 검증
+  - `params`: CLI 파라미터 명시
+- **test-runner.ts 재작성**: 자동으로 테스트 케이스 디렉토리 순회 및 검증
+- **자동 cleanup**: 각 테스트 실행 전 기존 output 파일 자동 삭제
+- **npm run test:clean**: 모든 테스트 output 수동 삭제 스크립트 (`test/*/nginx/conf.d`)
+- **파일 정리**: 기존 개별 test-*.ts 파일 삭제, test-utils.ts 삭제
+- **깔끔한 디렉토리 구조**: 기존 복잡한 구조를 `test/`로 단순화
+
+**테스트 결과** (6개 테스트 케이스):
+- ✅ 모든 테스트 통과
+- ✅ 에러 케이스도 데이터 기반으로 검증
+
+**주요 개선사항**:
+1. **데이터 기반 테스트**: 새 테스트 추가 시 코드 수정 불필요
+2. **명확한 구조**: 각 테스트 케이스가 독립적인 디렉토리
+3. **메타데이터 분리**: test.json으로 테스트 설정 명시
+4. **자동 발견**: test-runner가 test/ 디렉토리를 자동 순회
+5. **확장 용이**: 새 케이스는 디렉토리만 추가하면 됨
+6. **자동 cleanup**: 각 테스트 전 기존 output 삭제로 깨끗한 상태 보장
+7. **output 보존**: 테스트 후 생성 파일 유지로 수동 검증 가능
+
+**프로젝트 구조**:
+```
+nginx-config-generator/
+├── src/
+│   ├── index.ts
+│   └── test-runner.ts
+├── test/
+│   ├── 01-missing-params/
+│   ├── 02-no-listen-ports/
+│   ├── 03-with-listen-ports/
+│   ├── 04-no-default-port/
+│   ├── 05-with-default-port/
+│   └── 06-rename-main-service/
+```
+
+**테스트 실행**:
+```bash
+npm test  # 전체 테스트 자동 실행
+```
+
+**다음 단계**: GitHub Action 설정
+
+**블로커**: 없음
+
+---
+
+> 다음 클로드 코드에게:
+> - **v2.2 완성**: 데이터 기반 테스트 구조로 완전 개편
+> - **테스트 추가 방법**: `test/` 에 새 디렉토리 생성, test.json + compose.yaml + expected/ 구성
+> - **shouldFail 활용**: 에러 케이스는 test.json에서 shouldFail: true로 설정
+> - **자동 발견**: test-runner가 알아서 모든 케이스 실행
+> - 다음은 GitHub Action 설정으로 진행하면 됩니다
+
+### 2025-12-26 - v2.1: 필수 파라미터 및 강화된 테스트 스위트
+
+**상태**: ✅ 완료 (v2.1)
+
+**진행 내용**:
+- **필수 파라미터 강제**: 모든 CLI 파라미터 기본값 제거, 명시적 제공 필수
+- **TypeScript 오류 수정**: parseArgs 반환 타입 non-null assertion 추가
+- **강화된 테스트 스위트**: 4개의 독립적인 테스트 스위트로 분리
+  1. CLI 파라미터 검증 (test-cli-params.ts)
+  2. Listen ports 배열 테스트 (test-listen-ports.ts)
+  3. Default port 테스트 (test-default-port.ts)
+  4. 커스텀 nginx 서비스명 테스트 (test-nginx-service-name.ts)
+- **테스트 유틸리티**: 공통 테스트 함수 분리 (test-utils.ts)
+- **통합 test runner**: 모든 테스트를 순차 실행하고 결과 요약
+
+**테스트 결과** (12개 테스트 케이스):
+- ✅ CLI 파라미터 누락 시 실패 (4개 케이스)
+- ✅ Listen ports 기본값 [80] 테스트
+- ✅ Listen ports 배열 [80, 8080, 9000] 테스트
+- ✅ Default port 없을 때 $server_port 사용
+- ✅ Default port 있을 때 고정 포트 사용
+- ✅ 커스텀 nginx 서비스명 스킵 테스트 (my-custom-nginx-proxy)
+- ✅ 정확히 2개 파일 생성 검증
+
+**주요 개선사항**:
+1. **명시적 파라미터**: 기본값 제거로 실수 방지
+2. **포괄적 테스트**: 모든 기능 시나리오 커버
+3. **독립적 테스트**: 각 테스트 스위트 개별 실행 가능
+4. **상세한 오류 보고**: diff 형식으로 예상/실제 비교
+
+**테스트 실행**:
+```bash
+npm test  # 전체 테스트 스위트
+tsx src/test-cli-params.ts  # 개별 테스트
+```
+
+**다음 단계**: 문서 완성 후 GitHub Action 설정
+
+**블로커**: 없음
+
+---
+
+> 다음 클로드 코드에게:
+> - **v2.1 완성**: 필수 파라미터, 강화된 테스트 (12개 케이스)
+> - **테스트 스위트**: 4개 독립 테스트, test-utils.ts 공유
+> - **파라미터 없이 실행 불가**: 모든 파라미터 명시 필수
+> - **개별 테스트 실행**: `tsx src/test-*.ts`로 각 스위트 실행 가능
+> - 다음은 GitHub Action 설정
+
 ### 2025-12-26 - v2.0: 고급 기능 추가 및 테스트 스위트 구현
 
 **상태**: ✅ 완료 (v2.0)

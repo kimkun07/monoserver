@@ -65,9 +65,9 @@ function parseArgs(): GeneratorOptions {
   }
 
   return {
-    composePath: options.composePath,
-    outputDir: options.outputDir,
-    nginxServiceName: options.nginxServiceName,
+    composePath: options.composePath!,
+    outputDir: options.outputDir!,
+    nginxServiceName: options.nginxServiceName!,
   };
 }
 

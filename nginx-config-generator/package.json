@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc",
     "generate": "tsx src/index.ts --compose-path ../compose.yaml --output-dir ../nginx/conf.d --nginx-service monoserver-nginx-main",
-    "test": "tsx src/test-runner.ts"
+    "test": "tsx src/test-runner.ts",
+    "test:clean": "rm -rf test/*/nginx/conf.d"
   },
   "keywords": [
     "nginx",

@@ -6,9 +6,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "generate": "tsx src/index.ts",
-    "test": "tsx src/index.ts && cat ../nginx/conf.d/*.conf"
+    "generate": "tsx src/index.ts --compose-path ../compose.yaml --output-dir ../nginx/conf.d --nginx-service monoserver-nginx-main",
+    "test": "tsx src/test-runner.ts"
   },
   "keywords": [
     "nginx",

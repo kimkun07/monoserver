@@ -58,9 +58,96 @@
 
 ## 클로드 코드 일기
 
-### 2025-12-26 - nginx-config-generator 프로젝트 완성
+### 2025-12-26 - v2.0: 고급 기능 추가 및 테스트 스위트 구현
 
-**상태**: 🟡 준비중 → 🟢 진행중 → ✅ 완료
+**상태**: ✅ 완료 (v2.0)
+
+**진행 내용**:
+- **CLI 파라미터 추가**: `--compose-path`, `--output-dir`, `--nginx-service`
+- **경로 검증 강화**: compose.yaml, nginx/, nginx.conf 존재 확인 (안전한 삭제 보장)
+- **자동 생성 주석**: 모든 .conf 파일에 자동 생성 경고 헤더 추가
+- **x-monoserver-default-port**: 기존 x-monoserver-port에서 이름 변경, 선택적 필드로 변경
+- **x-monoserver-listen-ports**: 배열로 여러 listen 포트 지정 가능
+- **동적 프록시 라우팅**: default-port 없으면 `$server_port` 사용
+- **완전한 테스트 스위트**: test/compose.yaml과 expected/ 디렉토리로 자동 검증
+
+**테스트 결과**:
+- ✅ 4가지 시나리오 테스트 통과
+  - Full config (default port + listen ports)
+  - Default port only
+  - Listen ports only (dynamic routing)
+  - Minimal config (all defaults)
+- ✅ 경로 검증 테스트 통과
+- ✅ CLI 파라미터 테스트 통과
+
+**주요 기능 (v2.0)**:
+1. **유연한 포트 설정**:
+   - `x-monoserver-default-port`: 백엔드 프록시 포트 (선택적)
+   - `x-monoserver-listen-ports`: Nginx listen 포트 배열 (기본값: [80])
+2. **동적 라우팅**: default port 없으면 클라이언트 접속 포트로 프록시
+3. **안전한 삭제**: 경로 검증으로 잘못된 디렉토리 삭제 방지
+4. **파라미터화**: 모든 경로와 서비스명 커스터마이즈 가능
+5. **자동 검증**: npm test로 생성 결과 자동 비교
+
+**프로젝트 구조**:
+```
+nginx-config-generator/
+├── src/
+│   ├── index.ts         # 메인 생성기 (CLI 파라미터, 경로 검증)
+│   └── test-runner.ts   # 테스트 실행기
+├── test/
+│   ├── compose.yaml     # 테스트 입력
+│   ├── nginx/nginx.conf # 검증용
+│   └── expected/        # 예상 결과 (4개 파일)
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+**사용 방법**:
+```bash
+# 기본 사용
+cd nginx-config-generator
+npm install
+npm run generate
+
+# CLI 파라미터 사용
+tsx src/index.ts \
+  --compose-path /path/to/compose.yaml \
+  --output-dir /path/to/output \
+  --nginx-service my-nginx
+
+# 테스트 실행
+npm test
+```
+
+**compose.yaml 예시**:
+```yaml
+services:
+  my-service:
+    image: my-app
+    x-monoserver-default-port: "3000"       # 선택적
+    x-monoserver-listen-ports: [80, 8080]  # 선택적
+```
+
+**다음 단계**: GitHub Action 설정
+
+**블로커**: 없음
+
+---
+
+> 다음 클로드 코드에게:
+> - **v2.0 완성**: CLI 파라미터, 경로 검증, 동적 라우팅, 테스트 스위트 모두 완료
+> - **필드 변경**: `x-monoserver-port` → `x-monoserver-default-port` (선택적)
+> - **신규 필드**: `x-monoserver-listen-ports` (배열, 기본값 [80])
+> - **동적 라우팅**: default-port 없으면 `http://service:$server_port/` 사용
+> - **테스트**: `npm test`로 4가지 시나리오 자동 검증
+> - **CLI**: `--compose-path`, `--output-dir`, `--nginx-service` 옵션 사용 가능
+> - 다음은 GitHub Action 설정으로 진행하면 됩니다
+
+### 2025-12-26 - v1.0: 초기 구현 완료
+
+**상태**: 🟡 준비중 → 🟢 진행중 → ✅ 완료 (v1.0)
 
 **진행 내용**:
 - `nginx-config-generator/` 독립 프로젝트 생성 (표준 TypeScript 구조)
@@ -94,20 +181,8 @@
 ```bash
 cd nginx-config-generator
 npm install
-npm run generate  # 또는 npm run test
+npm run generate
 ```
-
-**다음 단계**: 없음 (기능 완성)
-
-**블로커**: 없음
-
----
-
-> 다음 클로드 코드에게:
-> - nginx-config-generator는 완성되었습니다
-> - 새 서비스를 추가할 때는 compose.yaml에 x-monoserver-port 필드를 추가하세요
-> - 생성기를 실행하려면 `cd nginx-config-generator && npm run generate`
-> - 다음은 GitHub Action 설정으로 진행하면 됩니다
 
 ### 2025-12-26 - 초기 계획 수립
 

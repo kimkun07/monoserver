@@ -17,7 +17,7 @@
 |------|------|---------|------|
 | Nginx Config Generator | ✅ 완료 | P0 | `nginx-conf-generator.md` |
 | Docker Rootless 설정 | ✅ 완료 | P0 | `docker-rootless.md` |
-| GitHub Actions 워크플로우 | 🟢 진행중 | P0 | `github-action.md` |
+| GitHub Actions 워크플로우 | ✅ 완료 (배포 미테스트) | P0 | `github-action.md` |
 | Google Compute Engine 설정 | 🟢 진행중 | P0 | `google-compute-engine.md` |
 | 설치 가이드 및 스크립트 | 🟡 준비중 | P1 | `install-guide.md` |
 
@@ -51,19 +51,40 @@ install-guide.md (P1)
 
 ## 다음 작업
 
+**최우선 작업: GCE 서버 설정 및 배포 테스트**
+
 클로드 코드가 수행해야 할 다음 작업:
-1. **`docker-rootless.md` 완료** - Docker rootless 설치 스크립트 작성
-   - Docker 공식 문서 조사
-   - `scripts/install-docker-rootless.sh` 작성
-   - GCE Ubuntu에서 실행 가능하도록 검증
-2. **`github-action.md` 읽기** - GitHub Actions 워크플로우 설정
-3. compose.yaml 변경 시 자동으로 nginx-conf-generator 실행
-4. GCE 서버에 자동 배포되도록 워크플로우 작성
+
+1. **GCE 서버 설정 확인** - `google-compute-engine.md` 읽고 확인
+   - Docker rootless가 설치되어 있는지 확인
+   - monoserver 저장소가 clone되어 있는지 확인
+   - SSH 접속이 제대로 되는지 확인
+   - `~/monoserver` 경로에 프로젝트가 있는지 확인
+
+2. **GitHub Secrets 설정**
+   - Repository Settings → Secrets and variables → Actions
+   - `GCE_HOST`: GCE 인스턴스의 외부 IP
+   - `GCE_USER`: SSH 사용자명
+   - `GCE_SSH_KEY`: SSH private key (전체 내용)
+
+3. **main 브랜치에서 배포 테스트**
+   - compose.yaml 작은 변경 (예: 주석 추가)
+   - commit & push하여 워크플로우 트리거
+   - `gh run watch`로 실행 모니터링
+   - "Deploy to Google Compute Engine" 단계 주의 깊게 확인
+
+4. **배포 검증**
+   - GCE 서버에 SSH 접속
+   - `docker compose ps`로 컨테이너 상태 확인
+   - nginx config 파일 업데이트 확인
+   - 실제 서비스 작동 테스트
+
+5. **install-guide.md** - 전체 프로세스 문서화 (배포 성공 후)
 
 ## 최근 업데이트
 
 ### 2025-12-27 (저녁)
-- ✅ **GitHub Actions 워크플로우 완성 및 테스트 성공**
+- ✅ **GitHub Actions 워크플로우 완성 및 main 브랜치 merge**
   - test-github-actions 브랜치 생성
   - 워크플로우 첫 실행 성공 (21초 소요)
   - nginx-config-generator 자동 실행 검증
@@ -74,7 +95,8 @@ install-guide.md (P1)
     - permissions: contents: write 추가
   - test 브랜치에서 GCE 배포 스킵 확인
   - gh CLI 설치 및 워크플로우 모니터링
-- 🟢 다음: main 브랜치로 PR 생성 및 실제 GCE 배포 테스트
+  - **PR #1 생성 및 main 브랜치로 merge 완료** ✅
+- 🟢 다음: GCE 서버 설정 확인 → GitHub Secrets 설정 → 실제 배포 테스트
 
 ### 2025-12-27 (오후)
 - 🟢 GitHub Actions 워크플로우 생성 (.github/workflows/deploy.yml)

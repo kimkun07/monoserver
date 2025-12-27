@@ -117,13 +117,51 @@ GitHub Repository Settings → Secrets and variables → Actions에 추가:
 
 **블로커**: 없음
 
+**완료 상태**:
+- ✅ **Nginx Config 자동 생성**: 완전히 작동 확인
+- ✅ **자동 커밋 & Push**: 완전히 작동 확인
+- ⏳ **Deploy to GCE**: 아직 테스트 안 됨 (main 브랜치에 merge 완료)
+
 ---
 
 > 다음 클로드 코드에게:
-> - 첫 GitHub Actions 실행 로그를 잘 확인하세요
-> - 특히 npm install, npm run generate 부분 체크
-> - 커밋 권한 문제가 있을 수 있으니 주의하세요
-> - 성공하면 main으로 merge하고 실제 배포 테스트 진행
+>
+> **현재 상태**: GitHub Actions 워크플로우가 main 브랜치에 merge되었습니다!
+> - Nginx config 자동 생성 ✅
+> - 자동 커밋 & push ✅
+> - **Deploy to GCE는 아직 테스트 안 됨** ⏳
+>
+> **다음 작업 (우선순위 순서)**:
+>
+> 1. **GCE 서버 설정 확인** (`google-compute-engine.md` 읽기)
+>    - Docker rootless가 설치되어 있는지 확인
+>    - monoserver 저장소가 clone되어 있는지 확인
+>    - SSH 접속이 제대로 되는지 확인
+>    - `~/monoserver` 경로에 프로젝트가 있는지 확인
+>
+> 2. **GitHub Secrets 설정**
+>    - Repository Settings → Secrets and variables → Actions에서 설정
+>    - `GCE_HOST`: GCE 인스턴스의 외부 IP
+>    - `GCE_USER`: SSH 사용자명 (예: simelvia)
+>    - `GCE_SSH_KEY`: SSH private key (전체 내용, -----BEGIN부터 -----END까지)
+>
+> 3. **main 브랜치에서 배포 테스트**
+>    - compose.yaml을 작은 변경으로 수정 (예: 주석 추가)
+>    - commit & push하여 워크플로우 트리거
+>    - `gh run watch`로 실행 모니터링
+>    - 특히 "Deploy to Google Compute Engine" 단계 주의 깊게 확인
+>    - 에러 발생 시 SSH 연결, 권한, Docker 상태 등을 체크
+>
+> 4. **배포 검증**
+>    - GCE 서버에 직접 SSH 접속
+>    - `docker compose ps`로 컨테이너 상태 확인
+>    - nginx config 파일이 업데이트되었는지 확인
+>    - 실제 서비스가 작동하는지 테스트
+>
+> **주의사항**:
+> - main 브랜치에서는 실제 GCE 배포가 실행됩니다
+> - SSH 키 설정이 잘못되면 워크플로우가 실패합니다
+> - 첫 배포 테스트는 신중하게 진행하세요
 
 ### 2025-12-27 (오후) - GitHub Actions 워크플로우 구현 완료
 

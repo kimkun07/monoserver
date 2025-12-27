@@ -63,13 +63,18 @@ install-guide.md (P1)
 ## 최근 업데이트
 
 ### 2025-12-27 (저녁)
-- ✅ **GitHub Actions 워크플로우 테스트 성공**
+- ✅ **GitHub Actions 워크플로우 완성 및 테스트 성공**
   - test-github-actions 브랜치 생성
   - 워크플로우 첫 실행 성공 (21초 소요)
   - nginx-config-generator 자동 실행 검증
+  - **자동 커밋 기능 완성** ✅
+    - compose.yaml 변경 → nginx config 자동 생성 → 자동 커밋
+    - echotest.conf 자동 생성 및 push 성공
+    - untracked 파일 감지 로직 수정
+    - permissions: contents: write 추가
   - test 브랜치에서 GCE 배포 스킵 확인
-  - gh CLI 설치 (워크플로우 상태 조회용)
-- 🟢 다음: main 브랜치로 PR 생성 및 실제 배포 테스트
+  - gh CLI 설치 및 워크플로우 모니터링
+- 🟢 다음: main 브랜치로 PR 생성 및 실제 GCE 배포 테스트
 
 ### 2025-12-27 (오후)
 - 🟢 GitHub Actions 워크플로우 생성 (.github/workflows/deploy.yml)

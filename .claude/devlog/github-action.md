@@ -90,13 +90,25 @@ GitHub Repository Settings → Secrets and variables → Actions에 추가:
 - ✅ 로그 확인
 - ✅ 문제 해결 (문제 없음)
 
-**테스트 결과** (2025-12-27 08:46):
+**테스트 결과 #1** (2025-12-27 08:46):
 - ✅ **워크플로우 실행 성공** (21초 소요)
 - ✅ Node.js 20 설정 완료
 - ✅ npm install 성공
 - ✅ npm run generate 성공 (기존 config와 동일)
 - ✅ GCE 배포 스킵 확인 (test 브랜치이므로)
 - 📊 **Run URL**: https://github.com/kimkun07/monoserver/actions/runs/20536852091
+
+**테스트 결과 #2 - 자동 커밋 기능 검증** (2025-12-27 10:06):
+- ✅ **자동 커밋 성공!** (17초 소요)
+- ✅ echotest 서비스 추가 → echotest.conf 자동 생성
+- ✅ git add + git diff --cached로 untracked 파일 감지
+- ✅ permissions: contents: write로 push 권한 부여
+- ✅ 자동 커밋 생성: `eff42cc chore: regenerate nginx configs`
+- 🔧 **수정사항**:
+  - untracked 파일 감지 로직 수정 (git add 먼저 실행)
+  - GitHub Variables 대신 하드코딩된 기본값 사용
+  - workflow permissions 추가
+- 📊 **Run URL**: https://github.com/kimkun07/monoserver/actions/runs/20537630440
 
 **고려사항**:
 - test 브랜치에서는 배포 스킵되므로 안전 ✅

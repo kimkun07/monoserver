@@ -11,4 +11,3 @@ services:
     image: hashicorp/http-echo
     command: ["-text=Hello from http-echo container!"]
     x-monoserver-default-port: "5678"
-    x-monoserver-listen-ports: [80, 8080]

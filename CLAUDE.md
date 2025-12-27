@@ -11,8 +11,8 @@ monoserver 프로젝트는 **devlog 시스템**을 사용하여 개발 작업을
 ### devlog 디렉토리 구조
 
 ```
-CLAUDE.md              # 이 문서 (Claude Code 가이드)
 .claude/
+├── claude.md              # 이 문서 (Claude Code 가이드)
 └── devlog/
     ├── main.md            # 프로젝트 전체 진행 상황 (시작점)
     ├── nginx-conf-generator.md
@@ -21,9 +21,35 @@ CLAUDE.md              # 이 문서 (Claude Code 가이드)
     └── install-guide.md
 ```
 
-### 작업 시작 프로세스
+### 새로운 Task 시작 프로세스
 
-Claude Code가 monoserver 프로젝트에서 작업을 시작할 때 다음 순서를 따릅니다:
+사용자가 새로운 Task를 시작하고 싶을 때 (예: Docker rootless 설정, 새로운 기능 추가 등):
+
+1. **새로운 devlog 파일 생성**
+   - `.claude/devlog/` 디렉토리에 task 이름으로 파일 생성 (예: `docker-rootless.md`)
+   - 템플릿 구조 사용:
+     - 개요
+     - 목표
+     - TODO 리스트
+     - 클로드 코드 일기 섹션
+
+2. **main.md 업데이트**
+   - Task 진행 상황 테이블에 새 항목 추가
+   - 우선순위 설정 (P0, P1, P2 등)
+   - 상태를 🟡 준비중 또는 🟢 진행중으로 설정
+   - Task 의존성 다이어그램 업데이트 (필요시)
+
+3. **작업 수행**
+   - 새로 생성한 devlog 파일의 TODO를 따라 진행
+   - 진행 상황을 devlog에 기록
+
+4. **CLAUDE.md 업데이트 (필요시)**
+   - 새로운 프로세스나 규칙이 발견되면 이 문서 업데이트
+   - 다음 Claude Code가 동일한 프로세스를 따르도록 명시
+
+### 기존 Task 작업 시작 프로세스
+
+Claude Code가 monoserver 프로젝트에서 기존 Task를 작업할 때 다음 순서를 따릅니다:
 
 1. **`.claude/devlog/main.md` 읽기**
    - 프로젝트 전체 개요 파악
@@ -50,11 +76,9 @@ Claude Code가 monoserver 프로젝트에서 작업을 시작할 때 다음 순�
      - 다음 단계 제안
      - 다음 Claude Code를 위한 조언
 
-5. **main.md 업데이트 (중요!)**
-   - **Task 상태 변경**: Task 진행 상황 테이블에서 상태 아이콘 업데이트 (🟡 → 🟢 → ✅)
-   - **다음 작업 섹션 업데이트**: 현재 Task 완료 시 다음 Task로 변경
-   - **최근 업데이트 섹션에 한 줄 요약 추가**: 날짜별로 작업 내용을 간단히 기록
-   - 예시: `- ✅ nginx-conf-generator 완료 (v2.2): 데이터 기반 테스트, 자동 cleanup, 완전한 문서화`
+5. **main.md 업데이트**
+   - Task 상태 변경 (🟡 → 🟢 → ✅)
+   - 최근 업데이트 섹션에 작업 내용 기록
 
 ### 상태 아이콘
 
@@ -123,18 +147,12 @@ Claude Code가 monoserver 프로젝트에서 작업을 시작할 때 다음 순�
 ## 마무리 체크리스트
 
 작업을 마치기 전에:
-- [ ] **해당 Task devlog 업데이트**
-  - [ ] TODO 리스트 체크
-  - [ ] "클로드 코드 일기" 작성 (구체적으로!)
-  - [ ] 테스트 결과 기록
-  - [ ] 다음 Claude Code를 위한 조언 작성
-- [ ] **main.md 업데이트 (필수!)**
-  - [ ] Task 진행 상황 테이블에서 상태 아이콘 변경 (🟡 → 🟢 → ✅)
-  - [ ] Task 완료 시 "다음 작업" 섹션을 다음 Task로 업데이트
-  - [ ] "최근 업데이트" 섹션에 작업 내용 한 줄 요약 추가
-- [ ] **문서 업데이트** (해당되는 경우)
-  - [ ] README.md
-  - [ ] 기타 관련 문서
+- [ ] TODO 리스트 업데이트
+- [ ] "클로드 코드 일기" 작성 (구체적으로!)
+- [ ] 테스트 결과 기록
+- [ ] 다음 Claude Code를 위한 조언 작성
+- [ ] main.md의 Task 상태 업데이트
+- [ ] main.md의 "최근 업데이트" 섹션에 항목 추가
 
 ---
 

@@ -16,6 +16,7 @@
 | Task | 상태 | 우선순위 | 파일 |
 |------|------|---------|------|
 | Nginx Config Generator | ✅ 완료 | P0 | `nginx-conf-generator.md` |
+| Docker Rootless 설정 | ✅ 완료 | P0 | `docker-rootless.md` |
 | GitHub Actions 워크플로우 | 🟡 준비중 | P0 | `github-action.md` |
 | Google Compute Engine 설정 | 🟡 준비중 | P0 | `google-compute-engine.md` |
 | 설치 가이드 및 스크립트 | 🟡 준비중 | P1 | `install-guide.md` |
@@ -30,7 +31,9 @@
 ## Task 의존성
 
 ```
-nginx-conf-generator.md (P0)
+nginx-conf-generator.md (P0) ✅
+    ↓
+docker-rootless.md (P0) ← 현재 진행중
     ↓
 github-action.md (P0)
     ↓
@@ -40,26 +43,41 @@ install-guide.md (P1)
 ```
 
 **권장 작업 순서:**
-1. `nginx-conf-generator.md` - Nginx 설정 파일 생성 로직이 먼저 완성되어야 함
-2. `github-action.md` - Generator를 GitHub Actions에서 실행
-3. `google-compute-engine.md` - 서버 설정 및 배포 테스트
-4. `install-guide.md` - 전체 프로세스가 검증된 후 문서화
+1. ✅ `nginx-conf-generator.md` - Nginx 설정 파일 생성 로직 완성
+2. 🟢 `docker-rootless.md` - Docker rootless 설치 스크립트 작성 (GCE 서버 설정에 필요)
+3. `github-action.md` - Generator를 GitHub Actions에서 실행
+4. `google-compute-engine.md` - 서버 설정 및 배포 테스트
+5. `install-guide.md` - 전체 프로세스가 검증된 후 문서화
 
 ## 다음 작업
 
 클로드 코드가 수행해야 할 다음 작업:
-1. **`github-action.md` 읽기** - GitHub Actions 워크플로우 설정
-2. compose.yaml 변경 시 자동으로 nginx-conf-generator 실행
-3. GCE 서버에 자동 배포되도록 워크플로우 작성
+1. **`docker-rootless.md` 완료** - Docker rootless 설치 스크립트 작성
+   - Docker 공식 문서 조사
+   - `scripts/install-docker-rootless.sh` 작성
+   - GCE Ubuntu에서 실행 가능하도록 검증
+2. **`github-action.md` 읽기** - GitHub Actions 워크플로우 설정
+3. compose.yaml 변경 시 자동으로 nginx-conf-generator 실행
+4. GCE 서버에 자동 배포되도록 워크플로우 작성
 
 ## 최근 업데이트
+
+### 2025-12-27
+- ✅ CLAUDE.md에 "새로운 Task 시작 프로세스" 섹션 추가
+- ✅ docker-rootless.md devlog 파일 생성
+- ✅ main.md에 Docker Rootless task 추가 (P0 우선순위)
+- ✅ Docker rootless 설치 스크립트 완성 (scripts/install-docker-rootless.sh)
+  - 전체 설치 프로세스 자동화
+  - CAP_NET_BIND_SERVICE 설정으로 privileged port (80, 443) 바인딩 지원
+  - 에러 핸들링 및 검증 포함
+  - GCE Ubuntu에서 사용 가능
+- 🟢 다음: GitHub Actions 워크플로우 또는 GCE 설정
 
 ### 2025-12-26
 - ✅ README.md 초안 작성 완료
 - ✅ compose.yaml 기본 구조 설정
 - ✅ devlog 시스템 구축
 - ✅ nginx-conf-generator 완료 (v2.2): 데이터 기반 테스트, 자동 cleanup, 완전한 문서화
-- 🟢 다음: GitHub Actions 워크플로우 설정
 
 ## 참고 자료
 

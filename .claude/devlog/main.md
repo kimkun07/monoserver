@@ -17,8 +17,8 @@
 |------|------|---------|------|
 | Nginx Config Generator | ✅ 완료 | P0 | `nginx-conf-generator.md` |
 | Docker Rootless 설정 | ✅ 완료 | P0 | `docker-rootless.md` |
-| GitHub Actions 워크플로우 | 🟡 준비중 | P0 | `github-action.md` |
-| Google Compute Engine 설정 | 🟡 준비중 | P0 | `google-compute-engine.md` |
+| GitHub Actions 워크플로우 | 🟢 진행중 | P0 | `github-action.md` |
+| Google Compute Engine 설정 | 🟢 진행중 | P0 | `google-compute-engine.md` |
 | 설치 가이드 및 스크립트 | 🟡 준비중 | P1 | `install-guide.md` |
 
 ### 상태 범례
@@ -62,7 +62,31 @@ install-guide.md (P1)
 
 ## 최근 업데이트
 
-### 2025-12-27
+### 2025-12-27 (저녁)
+- ✅ **GitHub Actions 워크플로우 테스트 성공**
+  - test-github-actions 브랜치 생성
+  - 워크플로우 첫 실행 성공 (21초 소요)
+  - nginx-config-generator 자동 실행 검증
+  - test 브랜치에서 GCE 배포 스킵 확인
+  - gh CLI 설치 (워크플로우 상태 조회용)
+- 🟢 다음: main 브랜치로 PR 생성 및 실제 배포 테스트
+
+### 2025-12-27 (오후)
+- 🟢 GitHub Actions 워크플로우 생성 (.github/workflows/deploy.yml)
+  - nginx-config-generator 자동 실행
+  - 생성된 conf.d 파일 자동 커밋
+  - GCE에 SSH로 배포
+  - docker compose up -d (변경된 서비스만 재시작)
+  - nginx reload (무중단 설정 업데이트)
+- 🟢 README.md 대폭 업데이트
+  - GCE 설정 가이드 상세화 (1-6단계)
+  - GitHub 연결 방법 추가
+  - Docker rootless 설치 스크립트 안내
+  - GitHub Actions SSH 설정 가이드
+  - 자동 업데이트 메커니즘 설명 추가
+- 🟢 devlog 업데이트 (main.md, github-action.md, google-compute-engine.md)
+
+### 2025-12-27 (오전)
 - ✅ CLAUDE.md에 "새로운 Task 시작 프로세스" 섹션 추가
 - ✅ docker-rootless.md devlog 파일 생성
 - ✅ main.md에 Docker Rootless task 추가 (P0 우선순위)

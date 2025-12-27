@@ -35,7 +35,8 @@ jobs:
     - name: Check for changes
       id: check_changes
       run: |
-        git diff --quiet nginx/conf.d/ || echo "changed=true" >> $GITHUB_OUTPUT
+        git add nginx/conf.d/
+        git diff --cached --quiet nginx/conf.d/ || echo "changed=true" >> $GITHUB_OUTPUT
 
     - name: Commit generated configs
       if: steps.check_changes.outputs.changed == 'true'

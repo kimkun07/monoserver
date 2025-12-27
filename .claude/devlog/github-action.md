@@ -73,11 +73,11 @@ GitHub Repository Settings → Secrets and variables → Actions에 추가:
 - `.github/workflows/deploy.yml` 수정:
   - test-github-actions 브랜치에서도 워크플로우 트리거되도록 설정
   - 배포 단계에 조건 추가: main 브랜치에서만 실제 GCE 배포 수행
-  - 테스트 브랜치에서는 config 생성 및 커밋만 테스트
+  - 테스트 브랜치에서는 config 생성 및 자동 커밋만 테스트
 - 안전한 테스트 환경 구축 완료
 
 **다음 단계**:
-1. .github 디렉토리 및 devlog 커밋
+1. 워크플로우 변경사항 커밋
 2. test-github-actions 브랜치로 push
 3. GitHub Actions 워크플로우 실행 확인
 4. 로그 검토 및 에러 수정

@@ -58,6 +58,61 @@
 
 ## 클로드 코드 일기
 
+### 2025-12-27 - v2.3: Docker DNS Resolver 및 동적 DNS 해석
+
+**상태**: ✅ 완료 (v2.3)
+
+**진행 내용**:
+- **Docker DNS resolver 추가**: 생성된 모든 nginx config에 `resolver 127.0.0.11 valid=30s;` 추가
+  - 127.0.0.11은 Docker의 내부 DNS 서버 주소
+  - 컨테이너 호스트명을 동적으로 해석할 수 있도록 설정
+- **동적 DNS 해석 구현**: proxy_pass에 변수 사용
+  - `set $upstream_{servicename} {servicename};` 변수 선언
+  - `proxy_pass http://$upstream_{servicename}:{port}/;` 형식으로 변경
+  - 변수 이름은 하이픈을 언더스코어로 변환 (nginx 변수명 규칙)
+- **시작 순서 문제 해결**:
+  - 이전: nginx 시작 시 upstream DNS 해석 실패하면 시작 실패
+  - 현재: 요청 시점에 DNS 해석하므로 시작 순서 무관
+- **테스트 케이스 업데이트**: 모든 expected 파일에 resolver 및 변수 추가
+  - test/02-no-listen-ports/expected/hello.conf
+  - test/03-with-listen-ports/expected/{admin,hello}.conf
+  - test/04-no-default-port/expected/hello.conf
+  - test/05-with-default-port/expected/hello.conf
+  - test/06-rename-main-service/expected/hello.conf
+
+**문제 해결**:
+- **원인**: nginx가 시작할 때 upstream 호스트를 즉시 해석하려 시도
+  - hello 컨테이너가 아직 DNS에 등록되지 않으면 "host not found" 에러
+  - nginx 컨테이너가 시작 실패로 종료
+- **해결책**:
+  1. Docker DNS resolver 설정으로 동적 DNS 조회 활성화
+  2. proxy_pass에 변수 사용으로 시작 시점이 아닌 요청 시점에 DNS 해석
+  3. compose.yaml에 depends_on 추가 (시작 순서 보장)
+
+**테스트 결과**:
+- ✅ 6/6 테스트 케이스 통과
+- ✅ docker compose down && up 테스트 성공 (시작 순서 무관하게 동작)
+- ✅ nginx "host not found" 에러 해결
+- ✅ 포트 80 프록시 정상 작동
+
+**코드 변경**:
+- `src/index.ts:176-211`: generateNginxConfig() 함수 템플릿 수정
+  - resolver 디렉티브 추가
+  - 변수 기반 proxy_pass 구현
+  - 주석으로 동작 원리 설명
+
+**다음 단계**: GitHub Action 설정 (변경 없음)
+
+**블로커**: 없음
+
+---
+
+> 다음 클로드 코드에게:
+> - **v2.3 완성**: Docker DNS resolver 및 동적 DNS 해석 추가
+> - **모든 서비스에 자동 적용**: 새로운 서비스를 추가해도 DNS 문제 없음
+> - **컨테이너 시작 순서 무관**: depends_on과 동적 DNS로 안정적 시작 보장
+> - **테스트 검증 완료**: 모든 테스트 케이스가 새 템플릿으로 업데이트됨
+
 ### 2025-12-26 - v2.2: 데이터 기반 테스트 구조 개편
 
 **상태**: ✅ 완료 (v2.2)

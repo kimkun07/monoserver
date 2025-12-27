@@ -6,8 +6,12 @@ services:
     volumes:
     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     - ./nginx/conf.d:/etc/nginx/conf.d:ro
-  
+
   hello:
     image: hashicorp/http-echo
     command: ["-text=Hello from http-echo container!"]
     x-monoserver-default-port: "5678"
+
+  whoami:
+    image: traefik/whoami
+    x-monoserver-default-port: "80"

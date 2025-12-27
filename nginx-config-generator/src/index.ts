@@ -177,11 +177,11 @@ function generateNginxConfig(serviceName: string, serviceConfig: ComposeService)
   const defaultPort = serviceConfig['x-monoserver-default-port'];
   const listenPorts = serviceConfig['x-monoserver-listen-ports'] || [80];
 
-  // Build proxy_pass URL
-  // If default port is specified, use it. Otherwise use $server_port (the port client connected to)
-  const proxyPass = defaultPort
-    ? `http://${serviceName}:${defaultPort}/`
-    : `http://${serviceName}:$server_port/`;
+  // Build proxy_pass URL using variables for dynamic DNS resolution
+  // Using variables forces nginx to resolve DNS at request time, not at startup
+  // This prevents "host not found" errors when containers start in any order
+  const port = defaultPort || '$server_port';
+  const upstreamVar = `upstream_${serviceName.replace(/-/g, '_')}`;
 
   // Build listen directives
   const listenDirectives = listenPorts
@@ -197,7 +197,10 @@ ${listenDirectives}
   server_name  ${serviceName}.localhost;
 
   location / {
-    proxy_pass ${proxyPass};
+    # Using a variable forces nginx to resolve DNS at request time
+    # This prevents startup failures when upstream containers aren't ready yet
+    set $${upstreamVar} ${serviceName};
+    proxy_pass http://$${upstreamVar}:${port}/;
   }
 }
 `;

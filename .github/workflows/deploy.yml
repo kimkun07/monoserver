@@ -1,0 +1,86 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [ main, test-github-actions ]
+    paths:
+      - 'compose.yaml'
+      - 'nginx/**'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  generate-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install dependencies
+      working-directory: ./nginx-config-generator
+      run: npm install
+
+    - name: Generate Nginx configs
+      working-directory: ./nginx-config-generator
+      run: npm run generate
+
+    - name: Check for changes
+      id: check_changes
+      run: |
+        git add nginx/conf.d/
+        git diff --cached --quiet nginx/conf.d/ || echo "changed=true" >> $GITHUB_OUTPUT
+
+    - name: Commit generated configs
+      if: steps.check_changes.outputs.changed == 'true'
+      run: |
+        git config --local user.name "github-actions[bot]"
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git add nginx/conf.d/
+        git commit -m "chore: regenerate nginx configs
+
+        Generated with [Claude Code](https://claude.ai/code)
+        via [Happy](https://happy.engineering)
+
+        Co-Authored-By: Claude <noreply@anthropic.com>
+        Co-Authored-By: Happy <yesreply@happy.engineering>"
+        git push
+
+    - name: Deploy to Google Compute Engine
+      if: github.ref == 'refs/heads/main'
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.GCE_HOST }}
+        username: ${{ secrets.GCE_USER }}
+        key: ${{ secrets.GCE_SSH_KEY }}
+        script: |
+          cd monoserver
+
+          # Pull latest changes
+          git pull origin main
+
+          # Update Docker containers (only changed services will restart)
+          docker compose up -d
+
+          # Reload Nginx to pick up config changes (zero-downtime)
+          docker compose exec monoserver-nginx-main nginx -s reload
+
+          # Show status
+          echo "=== Container Status ==="
+          docker compose ps
+
+          echo ""
+          echo "=== Nginx Config Test ==="
+          docker compose exec monoserver-nginx-main nginx -t
+
+          echo ""
+          echo "Deployment completed successfully!"

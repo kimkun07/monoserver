@@ -89,6 +89,11 @@ install-guide.md (P1)
 ## 최근 업데이트
 
 ### 2025-12-28
+- ✅ **포트 80 권한 문제 해결**
+  - 원인: CAP_NET_BIND_SERVICE 설정 후 docker restart 누락
+  - 해결: `systemctl --user restart docker` 실행
+  - install-docker-rootless.sh에 docker restart가 이미 포함되어 있음 (라인 201)
+  - 수동 restart 후 포트 80 바인딩 성공 확인
 - ✅ **GitHub Actions 에러 처리 완성**
   - 포트 80 바인딩 검증 로직 추가
   - `docker compose up -d`가 성공해도 포트 바인딩이 실패하는 경우 감지

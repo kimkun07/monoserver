@@ -44,6 +44,48 @@ Google Compute Engine 인스턴스를 monoserver 배포 환경으로 설정하�
 
 ## 클로드 코드 일기
 
+### 2025-12-28 - 포트 80 권한 문제 원인 발견 및 해결
+
+**상태**: ✅ 해결됨
+
+**진행 내용**:
+- **문제**: CAP_NET_BIND_SERVICE가 설정되어 있었지만 포트 80 바인딩이 실패
+- **원인 발견**: CAP_NET_BIND_SERVICE 설정 후 docker daemon을 restart하지 않음
+  - `setcap cap_net_bind_service=ep $(which rootlesskit)` 실행됨
+  - 하지만 설정 적용을 위해 docker restart가 필요했음
+- **해결 방법**: `systemctl --user restart docker` 실행 후 포트 80 바인딩 성공
+
+**근본 원인**:
+- `scripts/install-docker-rootless.sh`에서 CAP_NET_BIND_SERVICE 설정 후 docker restart를 하지 않음
+- setcap 설정은 즉시 적용되지 않고 프로세스 재시작이 필요
+
+**스크립트 수정 필요**:
+```bash
+# CAP_NET_BIND_SERVICE 설정 후
+sudo setcap cap_net_bind_service=ep "$(which rootlesskit)"
+
+# Docker daemon restart 추가 필요
+export XDG_RUNTIME_DIR=/run/user/$USERID
+systemctl --user restart docker
+```
+
+**테스트 결과**:
+- ✅ 수동으로 docker restart 실행 후 포트 80 바인딩 성공 확인
+- ✅ install-docker-rootless.sh 스크립트 확인: docker restart가 이미 추가되어 있음 (라인 201)
+- 🟡 스크립트가 올바르게 실행되었는지 재확인 필요
+
+**다음 단계**:
+1. ~~install-docker-rootless.sh에 docker restart 로직 추가~~ (이미 추가되어 있음)
+2. deploy.yml 검증 로직 개선 (포트 바인딩 확인)
+3. 전체 배포 플로우 재테스트
+
+---
+
+> 다음 클로드 코드에게:
+> - **포트 80 문제 해결됨!** docker restart가 핵심이었습니다
+> - install-docker-rootless.sh에 docker restart 추가 필요
+> - 다음은 전체 배포 플로우 재테스트
+
 ### 2025-12-28 - 배포 테스트 중 문제 발견
 
 **상태**: 🟢 진행중 (배포 테스트 단계)

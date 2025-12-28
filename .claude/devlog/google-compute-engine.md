@@ -44,6 +44,79 @@ Google Compute Engine 인스턴스를 monoserver 배포 환경으로 설정하�
 
 ## 클로드 코드 일기
 
+### 2025-12-28 - 배포 테스트 중 문제 발견
+
+**상태**: 🟢 진행중 (배포 테스트 단계)
+
+**진행 내용**:
+- ✅ GCE 서버 환경 확인 완료 (사용자가 직접 확인)
+  - Docker rootless 설치됨
+  - monoserver 저장소 clone됨
+  - SSH 접속 가능
+  - `~/monoserver` 경로 존재
+  - ⚠️ **최종 검증은 배포 수정 후 재확인 필요**
+- ✅ GitHub Secrets 설정 완료
+  - `GCE_HOST`, `GCE_USER`, `GCE_SSH_KEY` 모두 설정됨
+  - deploy 스크립트로 SSH 접속 확인됨
+- ✅ GitHub Actions 실행 확인
+  - 워크플로우 트리거 성공
+  - nginx-config-generator 단계 성공
+  - ❌ "Deploy to Google Compute Engine" 단계에서 실패
+
+**발견된 문제**:
+
+1. **워크플로우 에러 처리 문제**
+   - Deploy to Google Compute Engine 단계가 실패해도 전체 워크플로우가 성공으로 표시됨
+   - 에러를 감지하지 못하고 있음
+   - 수정 필요: 실패 시 워크플로우 전체 실패로 표시되어야 함
+
+2. **포트 80 권한 문제** (Critical)
+   ```
+   Error response from daemon: failed to set up container networking:
+   driver failed programming external connectivity on endpoint
+   monoserver-monoserver-nginx-main-1: error while calling RootlessKit
+   PortManager.AddPort(): cannot expose privileged port 80, you can add
+   'net.ipv4.ip_unprivileged_port_start=80' to /etc/sysctl.conf
+   (currently 1024), or set CAP_NET_BIND_SERVICE on rootlesskit binary,
+   or choose a larger port number (>= 1024): listen tcp4 0.0.0.0:80:
+   bind: permission denied
+   ```
+   - rootlesskit binary에 CAP_NET_BIND_SERVICE가 설정되지 않음
+   - `scripts/install-docker-rootless.sh`에 설정 로직이 있는데 적용 안 됨
+   - 원인 파악 및 수정 필요
+
+**다음 단계**:
+1. `.github/workflows/deploy.yml` 수정
+   - Deploy 단계 실패 시 워크플로우 전체 실패로 처리
+   - 에러 로그 명확히 출력
+2. 포트 80 권한 문제 해결
+   - GCE 서버에서 CAP_NET_BIND_SERVICE 설정 확인
+   - rootlesskit binary 경로 확인
+   - 필요 시 스크립트 재실행 또는 수동 설정
+3. 배포 재테스트 및 검증
+   - docker compose ps 확인
+   - nginx config 파일 확인
+   - 실제 서비스 접속 테스트
+
+**고려사항**:
+- [Nice To Have] nginx-conf-generator Docker 이미지화
+  - GitHub Actions에서 tsx가 없는 환경 대비
+  - 현재는 불필요한 것으로 판단 (tsx 설치가 빠름)
+  - 작업하지 않기로 결정
+  - 추후 필요 시 재검토
+
+**블로커**:
+- Deploy 단계 에러 처리 수정 필요 (우선순위 높음)
+- 포트 80 권한 문제 해결 필요 (Critical)
+
+---
+
+> 다음 클로드 코드에게:
+> - **포트 80 권한 문제**: CAP_NET_BIND_SERVICE 설정이 제대로 안 됨
+> - **deploy.yml 수정 필요**: 에러 발생 시 워크플로우 실패로 표시되어야 함
+> - **rootlesskit 경로 확인**: `/usr/bin/rootlesskit` 또는 `$HOME/bin/rootlesskit` 확인
+> - CAP_NET_BIND_SERVICE 설정 스크립트 재실행 또는 수동 설정 필요
+
 ### 2025-12-27 - README.md 가이드 작성 완료
 
 **상태**: 🟡 준비중 → 🟢 진행중

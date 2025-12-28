@@ -51,35 +51,40 @@ install-guide.md (P1)
 
 ## 다음 작업
 
-**최우선 작업: GCE 서버 설정 및 배포 테스트**
+**최우선 작업: 배포 실패 문제 해결**
 
 클로드 코드가 수행해야 할 다음 작업:
 
-1. **GCE 서버 설정 확인** - `google-compute-engine.md` 읽고 확인
-   - Docker rootless가 설치되어 있는지 확인
-   - monoserver 저장소가 clone되어 있는지 확인
-   - SSH 접속이 제대로 되는지 확인
-   - `~/monoserver` 경로에 프로젝트가 있는지 확인
+1. **deploy.yml 에러 처리 수정** (높은 우선순위)
+   - Deploy to Google Compute Engine 단계 실패 시 워크플로우 전체 실패로 표시
+   - 에러 로그 명확히 출력
+   - 현재: 실패해도 성공으로 보임 → 수정 필요
 
-2. **GitHub Secrets 설정**
-   - Repository Settings → Secrets and variables → Actions
-   - `GCE_HOST`: GCE 인스턴스의 외부 IP
-   - `GCE_USER`: SSH 사용자명
-   - `GCE_SSH_KEY`: SSH private key (전체 내용)
+2. **포트 80 권한 문제 해결** (Critical)
+   - 에러: `cannot expose privileged port 80`
+   - rootlesskit binary에 CAP_NET_BIND_SERVICE 설정 필요
+   - GCE 서버에서 설정 확인 및 수정
+   - rootlesskit 경로 확인: `/usr/bin/rootlesskit` 또는 `$HOME/bin/rootlesskit`
 
-3. **main 브랜치에서 배포 테스트**
-   - compose.yaml 작은 변경 (예: 주석 추가)
-   - commit & push하여 워크플로우 트리거
-   - `gh run watch`로 실행 모니터링
-   - "Deploy to Google Compute Engine" 단계 주의 깊게 확인
-
-4. **배포 검증**
-   - GCE 서버에 SSH 접속
+3. **배포 재테스트 및 검증**
+   - 위 문제 해결 후 배포 재실행
    - `docker compose ps`로 컨테이너 상태 확인
    - nginx config 파일 업데이트 확인
-   - 실제 서비스 작동 테스트
+   - 실제 서비스 작동 테스트 (브라우저 접속)
+
+4. **최종 환경 확인**
+   - GCE 서버 환경 최종 검증
+   - 모든 설정 재확인
 
 5. **install-guide.md** - 전체 프로세스 문서화 (배포 성공 후)
+
+---
+
+**완료된 작업 (진행 중):**
+- ✅ GCE 서버 환경 확인 (사용자가 직접 확인)
+- ✅ GitHub Secrets 설정 완료
+- ✅ GitHub Actions 실행 확인
+- ❌ Deploy to Google Compute Engine 단계에서 실패 발견
 
 ## 최근 업데이트
 
@@ -95,6 +100,17 @@ install-guide.md (P1)
     - CLI 파라미터 3개 → 2개로 축소 (--compose-path, --output-dir)
   - 모든 테스트 통과 (6/6)
   - README.md 및 package.json 업데이트
+- 🟢 **GCE 배포 테스트 진행 중**
+  - ✅ GCE 서버 환경 확인 완료 (최종 검증은 배포 수정 후)
+  - ✅ GitHub Secrets 설정 완료 (GCE_HOST, GCE_USER, GCE_SSH_KEY)
+  - ✅ deploy 스크립트 SSH 접속 확인
+  - ❌ **배포 실패 문제 발견**:
+    1. deploy.yml 에러 처리 문제: 실패해도 워크플로우가 성공으로 표시됨
+    2. 포트 80 권한 문제: CAP_NET_BIND_SERVICE 설정 미적용
+  - 📝 **Nice To Have**: nginx-conf-generator Docker 이미지화는 불필요하다고 판단
+    - tsx 설치가 빠르고 간단함
+    - 작업하지 않기로 결정
+- 🟢 다음: deploy.yml 에러 처리 수정 → 포트 80 권한 문제 해결 → 배포 재테스트
 
 ### 2025-12-27 (저녁)
 - ✅ **GitHub Actions 워크플로우 완성 및 main 브랜치 merge**

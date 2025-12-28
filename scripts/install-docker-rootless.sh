@@ -68,6 +68,22 @@ apt-get install -y uidmap
 log_info "Prerequisites installed successfully."
 
 # Step 2: Check subordinate UID/GID configuration
+# What are subordinate UIDs/GIDs?
+# - Allow a regular user to have a range of UIDs/GIDs for use in user namespaces
+# - Required for rootless Docker to map container UIDs to host UIDs safely
+#
+# Why is this needed for Rootless Docker?
+# - Rootless Docker uses user namespaces to run containers without root privileges
+# - When a container runs as root (UID 0), it's actually mapped to the host user's UID
+# - Other UIDs in the container are mapped to the subordinate UID range
+# - Example: Container UID 0 → Host UID 1000 (your user)
+#            Container UID 1 → Host UID 100000 (first subordinate UID)
+#            Container UID 2 → Host UID 100001 (second subordinate UID)
+#
+# The range 100000:65536 means:
+# - Starting UID/GID: 100000
+# - Number of IDs: 65536 (supports containers with UIDs 0-65535)
+
 log_info "Checking subordinate UID/GID configuration..."
 
 USERNAME="$ACTUAL_USER"
@@ -88,44 +104,37 @@ fi
 log_info "Subordinate UID/GID configuration verified."
 log_info "  UID range: $(grep "^${USERNAME}:" /etc/subuid)"
 log_info "  GID range: $(grep "^${USERNAME}:" /etc/subgid)"
+echo
 
 # Step 3: Install Docker Engine (if not already installed)
 if ! command -v docker &> /dev/null; then
     log_info "Docker is not installed. Installing Docker Engine..."
 
-    # Add Docker's official GPG key
+    apt-get update
     apt-get install -y ca-certificates curl
     install -m 0755 -d /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/${ID}/gpg -o /etc/apt/keyrings/docker.asc
     chmod a+r /etc/apt/keyrings/docker.asc
 
-    # Add the repository to Apt sources
-    echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/${ID} \
-      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-      tee /etc/apt/sources.list.d/docker.list > /dev/null
+    # Add the repository to Apt sources:
+    cat > /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
 
     apt-get update
 
-    # Install Docker packages including rootless extras
-    apt-get install -y \
-        docker-ce \
-        docker-ce-cli \
-        containerd.io \
-        docker-buildx-plugin \
-        docker-compose-plugin \
-        docker-ce-rootless-extras
+    # Install Docker packages excluding rootless extras
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
     log_info "Docker Engine installed successfully."
 else
     log_info "Docker is already installed."
-
-    # Check if rootless extras are installed
-    if ! command -v dockerd-rootless-setuptool.sh &> /dev/null; then
-        log_info "Installing docker-ce-rootless-extras..."
-        apt-get install -y docker-ce-rootless-extras
-    fi
 fi
+echo
 
 # Step 4: Disable system-wide Docker service (optional but recommended)
 if systemctl is-active --quiet docker.service; then
@@ -145,9 +154,10 @@ su - "$USERNAME" -c "dockerd-rootless-setuptool.sh check" || {
     exit 1
 }
 
-su - "$USERNAME" -c "dockerd-rootless-setuptool.sh install"
+su - "$USERNAME" -c "export XDG_RUNTIME_DIR=/run/user/$USERID; dockerd-rootless-setuptool.sh install"
 
-log_info "Rootless Docker installation completed."
+log_info "${GREEN}Rootless Docker installation completed.${NC}"
+echo
 
 # Step 5.5: Configure CAP_NET_BIND_SERVICE for privileged ports
 log_info "Configuring CAP_NET_BIND_SERVICE for privileged port binding..."
@@ -206,17 +216,17 @@ USER_HOME=$(eval echo ~"$USERNAME")
 SHELL_RC="$USER_HOME/.bashrc"
 
 # Check if already configured
-if ! grep -q "DOCKER_HOST=unix:///run/user/${USERID}/docker.sock" "$SHELL_RC"; then
+if ! grep -q "PATH=/usr/bin:$PATH" "$SHELL_RC"; then
     cat >> "$SHELL_RC" << 'EOF'
 
 # Docker rootless mode configuration
 export PATH=/usr/bin:$PATH
-export DOCKER_HOST=unix:///run/user/$(id -u)/docker.sock
 EOF
     log_info "Environment variables added to $SHELL_RC"
 else
     log_info "Environment variables already configured in $SHELL_RC"
 fi
+echo
 
 # Step 7: Enable systemd service
 log_info "Enabling systemd service..."
@@ -225,10 +235,11 @@ log_info "Enabling systemd service..."
 loginctl enable-linger "$USERNAME"
 
 # Start the service as the actual user
-su - "$USERNAME" -c "systemctl --user enable docker.service"
-su - "$USERNAME" -c "systemctl --user start docker.service"
+su - "$USERNAME" -c "export XDG_RUNTIME_DIR=/run/user/$USERID; systemctl --user enable docker.service"
+su - "$USERNAME" -c "export XDG_RUNTIME_DIR=/run/user/$USERID; systemctl --user start docker.service"
 
 log_info "Systemd service enabled and started."
+echo
 
 # Step 8: Verification
 log_info "Verifying installation..."
@@ -237,27 +248,39 @@ sleep 2  # Give Docker a moment to start
 
 if su - "$USERNAME" -c "docker info > /dev/null 2>&1"; then
     log_info "${GREEN}Docker is running successfully!${NC}"
-
     echo ""
-    echo "Docker Info:"
-    su - "$USERNAME" -c "docker info | grep -E '(Server Version|Security Options|Rootless)'" || true
 
-    echo ""
     log_info "Testing with hello-world container..."
     su - "$USERNAME" -c "docker run --rm hello-world"
-
     echo ""
+
+    echo "Docker Info:"
+    su - "$USERNAME" -c "docker info --format 'Client:
+ Version:           {{.ClientInfo.Version}}
+ Context:           {{.ClientInfo.Context}}
+ Plugins:
+  compose:          {{range .ClientInfo.Plugins}}{{if eq .Name \"compose\"}}{{.Version}}{{end}}{{end}}
+
+Server:
+ Containers:        {{.Containers}} (Running: {{.ContainersRunning}}, Stopped: {{.ContainersStopped}})
+ Server Version:    {{.ServerVersion}}
+ Security Options:  {{range .SecurityOptions}}{{.}} {{end}}'"
+    echo ""
+
     log_info "${GREEN}=========================================${NC}"
     log_info "${GREEN}Installation completed successfully!${NC}"
     log_info "${GREEN}=========================================${NC}"
     echo ""
+
     log_info "Next steps:"
     echo "  1. Log in as $USERNAME"
     echo "  2. Verify: docker info"
     echo "  3. Test: docker run --rm hello-world"
     echo ""
+    
     log_info "Note: Your Docker daemon is running as user: $USERNAME"
-    log_info "Docker socket: unix:///run/user/${USERID}/docker.sock"
+    DOCKER_SOCKET=$(su - "$USERNAME" -c "docker context inspect --format '{{.Endpoints.docker.Host}}'")
+    log_info "Docker socket: $DOCKER_SOCKET"
 else
     log_error "Docker verification failed. Please check the logs above."
     exit 1

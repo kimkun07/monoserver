@@ -51,126 +51,194 @@ GitHub Repository (compose.yaml)
 
 ### Step 2: Server Setup (Compute Engine)
 
-SSH into your Compute Engine instance and set up the environment:
+Follow these steps **on your GCE instance** after SSH-ing in.
 
-#### Install Docker (Rootless Mode)
-
-Rootless Docker provides better security by running Docker daemon as a non-root user.
+#### 1. Install Git
 
 ```bash
-# Update system packages
+# Update package list and install Git
 sudo apt-get update
-sudo apt-get install -y uidmap dbus-user-session
+sudo apt-get install -y git
+```
 
-# Install Docker rootless
-curl -fsSL https://get.docker.com/rootless | sh
+#### 2. Connect to GitHub
 
-# Add Docker to PATH
-echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
-echo 'export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock' >> ~/.bashrc
-source ~/.bashrc
+```bash
+# Configure Git (replace with your info)
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
 
-# Enable Docker service to start on boot
-systemctl --user enable docker
-loginctl enable-linger $(whoami)
+# Generate SSH key for GitHub
+ssh-keygen -t ed25519 -C "your.email@example.com" -f ~/.ssh/id_ed25519_github
+# Press Enter for all prompts (no passphrase recommended for automation)
 
-# Verify installation
+# Start ssh-agent in the background
+eval "$(ssh-agent -s)"
+
+# Add SSH private key to ssh-agent
+ssh-add ~/.ssh/id_ed25519_github
+
+# Display the public key (for adding to GitHub)
+cat ~/.ssh/id_ed25519_github.pub
+```
+
+**Add the public key to GitHub (via web browser):**
+1. Copy the entire output from `cat ~/.ssh/id_ed25519_github.pub` command
+2. Open https://github.com in your **web browser**
+3. Click your profile picture (top right) → **Settings**
+4. In the left sidebar, click **SSH and GPG keys**
+5. Click **New SSH key** button
+6. Give it a title (e.g., "GCE monoserver")
+7. Paste the public key into the "Key" field
+8. Click **Add SSH key**
+
+**Test GitHub connection:**
+```bash
+# Test SSH connection to GitHub
+ssh -T git@github.com
+
+# First time connecting: You'll see a fingerprint verification message
+# Verify the fingerprint matches GitHub's (SHA256:+...)
+# Type: yes
+
+# You should see: "Hi username! You've successfully authenticated..."
+```
+
+#### 3. Clone Repository
+
+```bash
+# Clone your forked repository using SSH
+git clone git@github.com:YOUR_USERNAME/monoserver.git
+cd monoserver
+```
+
+#### 4. Install Docker (Rootless Mode)
+
+Use the automated installation script included in the repository:
+
+```bash
+# Run the Docker rootless installation script with sudo
+sudo bash scripts/install-docker-rootless.sh
+```
+
+The script will:
+- Install prerequisites (uidmap)
+- Install Docker in rootless mode
+- Configure PATH and environment variables
+- Enable Docker service to start on boot
+- Set up privileged port binding (80, 443)
+- Verify installation
+
+Expected output looks like:
+```
+Docker Info:
+Client:
+ Version:           29.0.3
+ Context:           rootless
+ Plugins:
+  compose:          v2.40.3
+
+Server:
+ Containers:        3 (Running: 0, Stopped: 3)
+ Server Version:    29.0.3
+ Security Options:  name=seccomp,profile=builtin name=rootless name=cgroupns 
+```
+
+**After installation completes, log out and log back in** for changes to take effect:
+[TODO] logout 스텝이 필요한가?
+```bash
+exit
+# SSH back into the instance
+```
+
+**Verify Docker is working:**
+```bash
 docker ps
 docker compose version
 ```
 
-#### Clone Your Repository
+#### 5. Set Up GitHub Actions SSH Access
+
+Generate a dedicated SSH key for GitHub Actions to use:
 
 ```bash
-# Install Git if not already installed
-sudo apt-get install -y git
-
-# Clone your forked repository
-git clone https://github.com/YOUR_USERNAME/monoserver.git
-cd monoserver
-
-# Test docker compose locally
-docker compose up -d
-docker compose ps
-```
-
-### Step 3: GitHub Actions Setup
-
-#### Generate SSH Key on Compute Engine
-
-```bash
-# Generate SSH key (press Enter for all prompts)
+# Generate SSH key for GitHub Actions
 ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_actions
+# Press Enter for all prompts (no passphrase)
 
-# Display public key and add it to authorized_keys
+# Add public key to authorized_keys
 cat ~/.ssh/github_actions.pub >> ~/.ssh/authorized_keys
 
-# Display private key (you'll add this to GitHub)
+# Display private key (you'll add this to GitHub Secrets)
 cat ~/.ssh/github_actions
 ```
 
-#### Configure GitHub Secrets
+**Copy the entire private key output** (including `-----BEGIN` and `-----END` lines).
+
+### Step 3: Configure GitHub Repository Settings
+
+#### Add GitHub Secrets
 
 1. Go to your forked repository on GitHub
 2. Navigate to **Settings** → **Secrets and variables** → **Actions**
-3. Add the following secrets:
+3. Click **New repository secret** for each of the following:
 
-| Secret Name | Value |
-|------------|-------|
-| `SERVER_HOST` | Your Compute Engine external IP address |
-| `SERVER_USER` | Your server username (usually your GCP username) |
-| `SERVER_SSH_KEY` | Private key content from `~/.ssh/github_actions` |
+| Secret Name | Value | How to get |
+|------------|-------|------------|
+| `GCE_HOST` | Your Compute Engine external IP | Check GCE console or run `curl ifconfig.me` on the instance |
+| `GCE_USER` | Your server username | Usually your GCP username, check with `whoami` on the instance |
+| `GCE_SSH_KEY` | Private key for GitHub Actions | Output from `cat ~/.ssh/github_actions` (see Step 2.5) |
 
-#### Create GitHub Actions Workflow
+**Important:** Make sure to copy the **entire** private key including the `-----BEGIN OPENSSH PRIVATE KEY-----` and `-----END OPENSSH PRIVATE KEY-----` lines.
 
-Create `.github/workflows/deploy.yml` in your repository:
+### Step 4: Test Automatic Deployment
 
-```yaml
-name: Deploy to Server
+Now test the GitHub Actions workflow:
 
-on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'compose.yaml'
-      - 'nginx/**'
-      - '.github/workflows/deploy.yml'
+#### 4.1. Make a test change
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+On your **local machine** (or directly on GitHub):
 
-    steps:
-    - name: Deploy to server
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
-        script: |
-          cd monoserver
-          git pull origin main
-          docker compose down
-          docker compose up -d
-          docker compose ps
+```bash
+# Add a new service to compose.yaml
+# For example, add whoami service if not present
+git add compose.yaml
+git commit -m "test: add new service"
+git push origin main
 ```
 
-### Step 4: Test Deployment
+#### 4.2. Monitor GitHub Actions
 
-1. Make a change to `compose.yaml` in your repository
-2. Commit and push:
-   ```bash
-   git add compose.yaml
-   git commit -m "test: update service configuration"
-   git push origin main
-   ```
-3. Go to **Actions** tab in GitHub to monitor the workflow
-4. Once complete, verify services are running:
-   ```bash
-   ssh YOUR_SERVER
-   cd monoserver
-   docker compose ps
-   ```
+1. Go to your repository on GitHub
+2. Click the **Actions** tab
+3. You should see a workflow run starting
+4. Click on it to see detailed logs
+
+**What the workflow does:**
+1. ✅ Generates nginx config files from `compose.yaml`
+2. ✅ Commits changes to `nginx/conf.d/` (if any)
+3. ✅ SSHs into your GCE instance
+4. ✅ Pulls latest code
+5. ✅ Runs `docker compose up -d` (updates only changed services)
+6. ✅ Reloads nginx configuration
+
+#### 4.3. Verify deployment
+
+```bash
+# First, SSH into your server
+
+# Check container status
+cd monoserver
+docker compose ps
+
+# Verify nginx picked up new configs
+docker compose exec monoserver-nginx-main ls -la /etc/nginx/conf.d/
+
+# Test the services
+curl http://localhost/
+curl -H "Host: hello.localhost" http://localhost/
+curl -H "Host: whoami.localhost" http://localhost/
+```
 
 ### Step 5: Access Your Services
 
@@ -178,9 +246,49 @@ If you configured DNS:
 - `http://hello.yourdomain.com` → hello service
 - `http://yourdomain.com` → nginx default page
 
-For local testing:
-- Edit `/etc/hosts` to add: `SERVER_IP hello.localhost`
-- Access `http://hello.localhost`
+
+## How Automatic Updates Work
+
+### When you change `compose.yaml`
+
+1. **Trigger**: GitHub Actions detects changes to `compose.yaml`
+2. **Generate**: Nginx configs are automatically regenerated
+3. **Commit**: Changes to `nginx/conf.d/` are committed back to the repo
+4. **Deploy**: Server pulls changes and updates containers
+5. **Reload**: Nginx reloads configuration **without downtime**
+
+**Key point:** `docker compose up -d` only restarts containers that changed. Unchanged containers keep running.
+
+### When `nginx/conf.d/` files change
+
+The workflow automatically runs:
+```bash
+docker compose exec monoserver-nginx-main nginx -s reload
+```
+
+This tells nginx to:
+- ✅ Read new configuration files
+- ✅ Start new worker processes with new config
+- ✅ Gracefully shut down old worker processes
+- ✅ **Zero downtime** - no dropped connections
+
+### When services are added/removed
+
+**Adding a service:**
+1. Add to `compose.yaml` with `x-monoserver-default-port`
+2. Push to GitHub
+3. GitHub Actions generates new `.conf` file
+4. Server starts the new container
+5. Nginx adds the new route
+
+**Removing a service:**
+1. Remove from `compose.yaml`
+2. Push to GitHub
+3. GitHub Actions removes old `.conf` file
+4. Server stops the container
+5. Nginx removes the route
+
+**No manual intervention needed!**
 
 ## Usage
 

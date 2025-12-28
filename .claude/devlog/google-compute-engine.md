@@ -44,6 +44,50 @@ Google Compute Engine 인스턴스를 monoserver 배포 환경으로 설정하�
 
 ## 클로드 코드 일기
 
+### 2025-12-27 - README.md 가이드 작성 완료
+
+**상태**: 🟡 준비중 → 🟢 진행중
+
+**진행 내용**:
+- README.md에 GCE 설정 가이드 6단계로 상세 작성
+  1. GitHub 연결 (SSH 키 설정)
+  2. Repository clone
+  3. Docker rootless 설치 (scripts/install-docker-rootless.sh 사용)
+  4. GitHub Actions SSH 접근 설정
+  5. GitHub Secrets 및 Variables 설정
+  6. 초기 배포 및 테스트
+- 자동 업데이트 메커니즘 설명 추가
+  - compose.yaml 변경 시 자동 업데이트
+  - nginx/conf.d 변경 시 무중단 reload
+  - 서비스 추가/삭제 시 자동 처리
+- 테스트 가이드 작성 (curl 명령어 예시 포함)
+
+**테스트 결과**:
+- ⏸️ 실제 GCE 인스턴스에서 테스트 대기중 (사용자가 수행 예정)
+
+**다음 단계**:
+1. 사용자가 README.md의 Step 2 (Server Setup) 따라하기
+2. Step 3 (GitHub Secrets 설정) 완료
+3. Step 4 (초기 배포) 테스트
+4. Step 5 (자동 배포) 테스트
+5. 문제 발생 시 devlog에 기록 및 수정
+
+**고려사항**:
+- Docker rootless 설치 스크립트 이미 완성됨
+- Privileged port (80) 바인딩 설정 포함됨
+- GitHub Actions SSH 키는 별도로 생성 (보안)
+- nginx reload는 무중단으로 설정 변경 적용
+
+**블로커**: 없음 (사용자 테스트 대기)
+
+---
+
+> 다음 클로드 코드에게:
+> - README.md 가이드가 완성되었습니다
+> - 사용자가 직접 테스트하면서 문제를 발견할 예정
+> - 문제 발생 시 여기에 기록하고 README.md 업데이트하세요
+> - 특히 권한 문제, 포트 바인딩 문제, SSH 연결 문제를 주의하세요
+
 ### 2025-12-26 - 초기 계획 수립
 
 **상태**: 🟡 준비중

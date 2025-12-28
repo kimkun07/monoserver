@@ -2,11 +2,12 @@ name: Deploy to Server
 
 on:
   push:
-    branches: [ main, test-github-actions ]
+    branches: [ main ]
     paths:
       - 'compose.yaml'
       - 'nginx/**'
       - '.github/workflows/deploy.yml'
+  workflow_dispatch:
 
 jobs:
   generate-and-deploy:

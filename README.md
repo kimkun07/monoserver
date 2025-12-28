@@ -27,11 +27,13 @@ Declarative Docker container orchestration with automatic deployment via Git com
 - GitHub account
 - No domain or DNS configuration needed (uses path-based routing)
 
-### Step 1: Fork Repository
+### Step 1: Use Template Repository
 
 1. Go to the monoserver repository on GitHub
-2. Click "Fork" to create your own copy
-3. Clone your forked repository locally (optional for testing)
+2. Click "Use this template" → "Create a new repository"
+3. Choose a name for your repository (e.g., "my-monoserver")
+4. Click "Create repository"
+5. Clone your new repository locally (optional for testing)
 
 ### Step 2: Server Setup (Compute Engine)
 
@@ -92,9 +94,9 @@ ssh -T git@github.com
 #### 3. Clone Repository
 
 ```bash
-# Clone your forked repository using SSH
-git clone git@github.com:YOUR_USERNAME/monoserver.git
-cd monoserver
+# Clone your repository using SSH (replace YOUR_USERNAME and YOUR_REPO_NAME)
+git clone git@github.com:YOUR_USERNAME/YOUR_REPO_NAME.git
+cd YOUR_REPO_NAME
 ```
 
 #### 4. Install Docker (Rootless Mode)
@@ -157,7 +159,7 @@ cat ~/.ssh/github_actions
 
 #### Add GitHub Secrets
 
-1. Go to your forked repository on GitHub
+1. Go to your repository on GitHub
 2. Navigate to **Settings** → **Secrets and variables** → **Actions**
 3. Click **New repository secret** for each of the following:
 
@@ -175,7 +177,7 @@ cat ~/.ssh/github_actions
 
 Manually trigger the GitHub Actions workflow to deploy your containers:
 
-1. Go to your forked repository on GitHub
+1. Go to your repository on GitHub
 2. Click the **Actions** tab
 3. Click on **"Deploy to Google Compute Engine"** workflow (left sidebar)
 4. Click the **"Run workflow"** button (right side)

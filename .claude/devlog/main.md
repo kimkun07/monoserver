@@ -9,17 +9,17 @@
 
 ## 현재 단계
 
-**Phase 1: 기본 인프라 구축** - 진행 중
+**Phase 1: 기본 인프라 구축** - ✅ 완료
 
 ## Task 진행 상황
 
 | Task | 상태 | 우선순위 | 파일 |
 |------|------|---------|------|
-| Nginx Config Generator | ✅ 완료 | P0 | `nginx-conf-generator.md` |
+| Nginx Config Generator | ✅ 완료 (v3.3) | P0 | `nginx-conf-generator.md` |
 | Docker Rootless 설정 | ✅ 완료 | P0 | `docker-rootless.md` |
-| GitHub Actions 워크플로우 | ✅ 완료 (배포 미테스트) | P0 | `github-action.md` |
-| Google Compute Engine 설정 | 🟢 진행중 | P0 | `google-compute-engine.md` |
-| 설치 가이드 및 스크립트 | 🟡 준비중 | P1 | `install-guide.md` |
+| GitHub Actions 워크플로우 | ✅ 완료 | P0 | `github-action.md` |
+| Google Compute Engine 설정 | ✅ 완료 | P0 | `google-compute-engine.md` |
+| 설치 가이드 (README.md) | ✅ 완료 | P0 | README.md |
 
 ### 상태 범례
 - 🔴 차단됨 (Blocked)
@@ -33,62 +33,63 @@
 ```
 nginx-conf-generator.md (P0) ✅
     ↓
-docker-rootless.md (P0) ← 현재 진행중
+docker-rootless.md (P0) ✅
     ↓
-github-action.md (P0)
+github-action.md (P0) ✅
     ↓
-google-compute-engine.md (P0)
+google-compute-engine.md (P0) ✅
     ↓
-install-guide.md (P1)
+README.md (P0) ✅
+
+Phase 1 완료! 🎉
 ```
 
-**권장 작업 순서:**
-1. ✅ `nginx-conf-generator.md` - Nginx 설정 파일 생성 로직 완성
-2. 🟢 `docker-rootless.md` - Docker rootless 설치 스크립트 작성 (GCE 서버 설정에 필요)
-3. `github-action.md` - Generator를 GitHub Actions에서 실행
-4. `google-compute-engine.md` - 서버 설정 및 배포 테스트
-5. `install-guide.md` - 전체 프로세스가 검증된 후 문서화
+**완료된 작업 순서:**
+1. ✅ `nginx-conf-generator.md` - Nginx 설정 파일 생성 로직 완성 (v3.3)
+2. ✅ `docker-rootless.md` - Docker rootless 설치 스크립트 작성
+3. ✅ `github-action.md` - Generator를 GitHub Actions에서 실행
+4. ✅ `google-compute-engine.md` - 서버 설정 및 배포 테스트 완료
+5. ✅ `README.md` - 전체 설치 가이드 완성 (path-based routing)
 
 ## 다음 작업
 
-**최우선 작업: 배포 실패 문제 해결**
+**Phase 1 완료! 🎉**
 
-클로드 코드가 수행해야 할 다음 작업:
+모든 기본 인프라가 구축되었습니다:
+- ✅ Path-based routing으로 Nginx 자동 설정
+- ✅ Docker rootless 모드로 안전한 컨테이너 실행
+- ✅ GitHub Actions 자동 배포 파이프라인
+- ✅ GCE 서버에서 실제 배포 검증 완료
+- ✅ 완전한 설치 가이드 (README.md)
 
-1. **deploy.yml 에러 처리 수정** (높은 우선순위)
-   - Deploy to Google Compute Engine 단계 실패 시 워크플로우 전체 실패로 표시
-   - 에러 로그 명확히 출력
-   - 현재: 실패해도 성공으로 보임 → 수정 필요
+**현재 상태:**
+- compose.yaml 변경 → GitHub push → 자동 배포 → 서비스 즉시 반영
+- `http://YOUR_IP/hello/`, `http://YOUR_IP/whoami/` 접속 가능
 
-2. **포트 80 권한 문제 해결** (Critical)
-   - 에러: `cannot expose privileged port 80`
-   - rootlesskit binary에 CAP_NET_BIND_SERVICE 설정 필요
-   - GCE 서버에서 설정 확인 및 수정
-   - rootlesskit 경로 확인: `/usr/bin/rootlesskit` 또는 `$HOME/bin/rootlesskit`
-
-3. **배포 재테스트 및 검증**
-   - 위 문제 해결 후 배포 재실행
-   - `docker compose ps`로 컨테이너 상태 확인
-   - nginx config 파일 업데이트 확인
-   - 실제 서비스 작동 테스트 (브라우저 접속)
-
-4. **최종 환경 확인**
-   - GCE 서버 환경 최종 검증
-   - 모든 설정 재확인
-
-5. **install-guide.md** - 전체 프로세스 문서화 (배포 성공 후)
+**향후 개선 가능 사항 (우선순위 낮음):**
+- 도메인 연결 및 HTTPS 설정 (Let's Encrypt)
+- 모니터링 및 로깅 시스템
+- 추가 보안 강화 (방화벽, fail2ban 등)
+- 백업 및 복구 전략
 
 ---
 
-**완료된 작업 (진행 중):**
-- ✅ GCE 서버 환경 확인 (사용자가 직접 확인)
-- ✅ GitHub Secrets 설정 완료
-- ✅ GitHub Actions 실행 확인
-- ❌ Deploy to Google Compute Engine 단계에서 실패 발견
+**Phase 1 달성 내역:**
+- ✅ GCE 서버 환경 구축
+- ✅ GitHub Secrets 설정
+- ✅ GitHub Actions 자동 배포 성공
+- ✅ Path-based routing 적용
+- ✅ 포트 80 권한 문제 해결
+- ✅ Docker bind mount 최적화
 
 ## 최근 업데이트
 
 ### 2025-12-28
+- 🎉 **Phase 1 완료!**
+  - GCE 실제 배포 테스트 완료
+  - 모든 서비스 정상 작동 확인 (`http://YOUR_IP/hello/`, `/whoami/`)
+  - compose.yaml 변경 시 자동 배포 파이프라인 검증 완료
+  - 기본 인프라 구축 완료
 - ✅ **nginx-config-generator v3.3 완성**
   - nginx.conf와 routes.conf 구조 분리
   - server 블록은 nginx.conf로 이동, routes.conf는 location만 포함
@@ -202,11 +203,14 @@ install-guide.md (P1)
 ## 참고 자료
 
 - 프로젝트 가이드: `/CLAUDE.md`
+- 설치 가이드: `/README.md`
 - 현재 compose.yaml: `/compose.yaml`
-- Nginx 설정: `/nginx/nginx.conf`, `/nginx/conf.d/`
+- Nginx 설정: `/nginx/nginx.conf` (수동), `/nginx/routes.conf` (자동 생성)
+- Config generator: `/nginx-config-generator/`
 
 ## 메모
 
-- Docker는 rootless 모드로 설치 예정
-- nginx/conf.d 아래는 자동 생성되므로 수동 편집 금지
-- GitHub Actions는 `compose.yaml` 변경 시에만 트리거
+- ✅ Docker는 rootless 모드로 설치됨 (포트 80 바인딩 가능)
+- ⚠️ `nginx/routes.conf`는 자동 생성되므로 수동 편집 금지
+- ✅ GitHub Actions는 `compose.yaml` 변경 시 자동 트리거
+- ✅ Path-based routing: `/service-name/` 형식으로 접근

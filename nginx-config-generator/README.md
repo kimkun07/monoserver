@@ -12,15 +12,16 @@ This tool reads your `compose.yaml` file and creates individual Nginx `.conf` fi
 - **Flexible port configuration**: Support for both default ports and multiple listen ports
 - **Dynamic proxy routing**: Use fixed ports or `$server_port` for dynamic routing
 - **Safety validation**: Validates paths before removing directories
-- **CLI parameters**: Customize paths and service names
+- **Fixed nginx service name**: Always uses `monoserver-nginx-main` as the nginx service name (hardcoded)
 - **Comprehensive tests**: Full test suite with expected output validation
 
 ## How It Works
 
 1. Reads `compose.yaml` from the specified path (or project root)
 2. Validates that nginx directory and nginx.conf exist (safety check)
-3. Extracts all services (except the nginx proxy service itself)
-4. For each service:
+3. **Validates that `monoserver-nginx-main` service exists** (required for deployment)
+4. Extracts all services (except `monoserver-nginx-main` which is the nginx proxy itself)
+5. For each service:
    - Creates a `{service-name}.conf` file
    - Configures subdomain routing: `{service-name}.localhost`
    - Sets up reverse proxy with appropriate ports
@@ -47,28 +48,25 @@ npm test
 ```bash
 tsx src/index.ts \
   --compose-path <path-to-compose.yaml> \
-  --output-dir <output-directory> \
-  --nginx-service <nginx-service-name>
+  --output-dir <output-directory>
 ```
 
 **Example:**
 ```bash
 tsx src/index.ts \
   --compose-path ../compose.yaml \
-  --output-dir ../nginx/conf.d \
-  --nginx-service monoserver-nginx-main
+  --output-dir ../nginx/conf.d
 ```
 
 **Running without parameters will fail:**
 ```bash
 $ tsx src/index.ts
-❌ Error: Missing required parameters: --compose-path, --output-dir, --nginx-service
+❌ Error: Missing required parameters: --compose-path, --output-dir
 
 Usage:
   tsx src/index.ts \
     --compose-path <path-to-compose.yaml> \
-    --output-dir <output-directory> \
-    --nginx-service <nginx-service-name>
+    --output-dir <output-directory>
 ```
 
 ### CLI Options
@@ -77,7 +75,8 @@ All parameters are **required**:
 
 - `--compose-path`: Path to compose.yaml file
 - `--output-dir`: Output directory for .conf files
-- `--nginx-service`: Name of nginx service to skip (the proxy service itself)
+
+**Note**: The nginx service name is hardcoded as `monoserver-nginx-main` and will always be skipped during config generation.
 
 ## compose.yaml Configuration
 
@@ -202,6 +201,16 @@ Before removing any directories, the generator validates:
 
 This prevents accidental deletion of wrong directories and ensures you're working with a valid nginx setup.
 
+### Service Validation
+
+The generator validates that the required nginx service exists:
+
+1. **monoserver-nginx-main must exist**: The compose.yaml file must contain a service named exactly `monoserver-nginx-main`
+2. **Deployment compatibility**: This ensures compatibility with the GitHub Actions deployment workflow which hardcodes this service name
+3. **Clear error messages**: If the service is missing or misnamed, the generator will fail with a descriptive error message
+
+This prevents deployment failures by catching configuration errors early.
+
 ## Testing
 
 The project includes a comprehensive data-driven test suite with 6 test cases:
@@ -225,7 +234,7 @@ The test suite automatically discovers and runs all tests in `test/`:
 3. **03-with-listen-ports**: Tests multiple listen ports configuration
 4. **04-no-default-port**: Tests dynamic routing with `$server_port` when `x-monoserver-default-port` is omitted
 5. **05-with-default-port**: Tests fixed port routing when `x-monoserver-default-port` is specified
-6. **06-rename-main-service**: Tests that custom nginx service names are properly skipped
+6. **06-wrong-nginx-service**: Tests that the generator fails when nginx service is not named `monoserver-nginx-main`
 
 ### Test Structure
 
@@ -242,8 +251,7 @@ Example `test.json`:
   "shouldFail": false,
   "params": {
     "composePath": "./compose.yaml",
-    "outputDir": "./nginx/conf.d",
-    "nginxService": "monoserver-nginx-main"
+    "outputDir": "./nginx/conf.d"
   }
 }
 ```
@@ -255,8 +263,7 @@ For tests that should fail:
   "shouldFail": true,
   "expectedError": "Missing required parameters",
   "params": {
-    "outputDir": "./nginx/conf.d",
-    "nginxService": "monoserver-nginx-main"
+    "outputDir": "./nginx/conf.d"
   }
 }
 ```
@@ -299,7 +306,7 @@ nginx-config-generator/
 │   │   └── nginx/nginx.conf
 │   ├── 04-no-default-port/
 │   ├── 05-with-default-port/
-│   └── 06-rename-main-service/
+│   └── 06-wrong-nginx-service/
 ├── dist/                          # Compiled output (after build)
 ├── package.json
 ├── tsconfig.json
@@ -332,12 +339,12 @@ npm run build
 # Run generator with explicit parameters (required)
 tsx src/index.ts \
   --compose-path ../compose.yaml \
-  --output-dir ../nginx/conf.d \
-  --nginx-service monoserver-nginx-main
+  --output-dir ../nginx/conf.d
 
 # Run with test files
 tsx src/index.ts \
-  --compose-path ./test/compose.yaml \
-  --output-dir ./test/nginx/conf.d \
-  --nginx-service test-nginx
+  --compose-path ./test/02-no-listen-ports/compose.yaml \
+  --output-dir ./test/02-no-listen-ports/nginx/conf.d
 ```
+
+**Note**: The nginx service `monoserver-nginx-main` is hardcoded and will always be excluded from config generation.

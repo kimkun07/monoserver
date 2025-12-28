@@ -1,0 +1,12 @@
+services:
+  my-custom-nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+
+  hello:
+    image: ghcr.io/simnalamburt/hello:latest
+    x-monoserver-default-port: "5678"

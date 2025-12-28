@@ -58,6 +58,118 @@
 
 ## 클로드 코드 일기
 
+### 2025-12-28 - v2.5: nginx 서비스명 필수 검증
+
+**상태**: ✅ 완료 (v2.5)
+
+**진행 내용**:
+- **필수 검증 추가**: compose.yaml에 `monoserver-nginx-main` 서비스가 반드시 존재해야 함
+- **에러 메시지**: 서비스가 없으면 명확한 에러 메시지 출력
+  - "Required nginx service "monoserver-nginx-main" not found in compose.yaml."
+  - "The nginx service must be named exactly "monoserver-nginx-main" to work with the deployment system."
+- **코드 변경**:
+  - `src/index.ts:127-133`: nginx 서비스 존재 검증 로직 추가
+  - compose.yaml 파싱 후 즉시 검증
+- **테스트 케이스 추가**:
+  - `test/06-wrong-nginx-service/`: nginx 서비스 이름이 다를 때 실패 테스트
+  - `test.json`: shouldFail: true, expectedError 설정
+  - `compose.yaml`: my-custom-nginx 사용 (잘못된 이름)
+- **문서 업데이트**:
+  - `README.md`: "Service Validation" 섹션 추가
+  - How It Works 섹션에 검증 단계 추가
+  - 테스트 케이스 5개 → 6개로 업데이트
+
+**테스트 결과**:
+- ✅ 6/6 테스트 케이스 통과
+- ✅ 06-wrong-nginx-service: nginx 서비스명 검증 실패 테스트 통과
+
+**변경 이유**:
+- deploy.yml이 `monoserver-nginx-main` 하드코딩 사용
+- 잘못된 이름 사용 시 배포 실패 발생
+- 조기 검증으로 배포 전 오류 발견
+- 명확한 에러 메시지로 사용자 가이드
+
+**주요 개선사항**:
+1. **조기 오류 감지**: compose.yaml 파싱 직후 검증
+2. **명확한 에러 메시지**: 무엇이 잘못되었는지 명확히 안내
+3. **배포 안정성**: 잘못된 설정으로 인한 배포 실패 방지
+4. **테스트 커버리지**: 오류 케이스까지 테스트 확장
+
+**다음 단계**: 실제 배포 환경 테스트
+
+**블로커**: 없음
+
+---
+
+> 다음 클로드 코드에게:
+> - **v2.5 완성**: nginx 서비스명 필수 검증 추가
+> - **monoserver-nginx-main 필수**: compose.yaml에 반드시 존재해야 함
+> - **테스트 6개**: 오류 케이스 포함하여 완전한 검증
+> - 다음은 실제 배포 환경 테스트로 진행하면 됩니다
+
+### 2025-12-28 - v2.4: nginx 서비스명 하드코딩
+
+**상태**: ✅ 완료 (v2.4)
+
+**진행 내용**:
+- **nginxServiceName 파라미터 제거**: CLI 파라미터에서 `--nginx-service` 완전 제거
+- **하드코딩 적용**: `monoserver-nginx-main` 상수로 고정
+  - deploy.yml에서 하드코딩된 이름 사용하므로 일관성 확보
+  - 변경 불가능한 값이므로 파라미터로 받을 필요 없음
+- **코드 변경**:
+  - `src/index.ts:20-25`: GeneratorOptions 인터페이스에서 nginxServiceName 제거, NGINX_SERVICE_NAME 상수 추가
+  - `src/index.ts:31-65`: parseArgs()에서 --nginx-service 파라미터 처리 제거
+  - `src/index.ts:110,144`: options.nginxServiceName → NGINX_SERVICE_NAME 상수 사용
+  - `src/test-runner.ts:8-16`: TestConfig 인터페이스에서 nginxService 필드 제거
+  - `src/test-runner.ts:44-54`: runGenerator()에서 nginxService 파라미터 처리 제거
+- **테스트 케이스 업데이트**:
+  - `test/01-missing-params/test.json`: nginxService 파라미터 제거
+  - `test/02-no-listen-ports/test.json`: nginxService 파라미터 제거
+  - `test/03-with-listen-ports/test.json`: nginxService 파라미터 제거
+  - `test/04-no-default-port/test.json`: nginxService 파라미터 제거
+  - `test/05-with-default-port/test.json`: nginxService 파라미터 제거
+  - `test/06-rename-main-service/`: 더 이상 유효하지 않아 전체 디렉토리 삭제
+- **문서 업데이트**:
+  - `package.json:9`: npm run generate 스크립트에서 --nginx-service 제거
+  - `README.md`: 전체 문서에서 --nginx-service 관련 내용 제거 및 하드코딩 사실 명시
+    - Features 섹션에 "Fixed nginx service name" 추가
+    - CLI 사용법에서 --nginx-service 파라미터 제거
+    - 테스트 케이스 6개 → 5개로 변경
+    - 모든 예시 코드에서 --nginx-service 제거
+
+**테스트 결과**:
+- ✅ 5/5 테스트 케이스 통과
+- ✅ 01-missing-params: composePath 누락 시 실패
+- ✅ 02-no-listen-ports: 기본 포트 [80] 사용
+- ✅ 03-with-listen-ports: 다중 포트 설정
+- ✅ 04-no-default-port: $server_port 동적 라우팅
+- ✅ 05-with-default-port: 고정 포트 사용
+
+**변경 이유**:
+- GitHub Actions deploy.yml에서 `monoserver-nginx-main` 하드코딩 사용
+- compose.yaml의 nginx 서비스 이름 변경 불가능 (변경 시 배포 실패)
+- 설정 가능하도록 만든 것이 잘못된 설계
+- 항상 동일한 값을 사용하므로 파라미터가 아닌 상수로 관리
+
+**주요 개선사항**:
+1. **단순화**: 불필요한 CLI 파라미터 제거
+2. **일관성**: deploy.yml과 완전히 일치하는 동작 보장
+3. **명확성**: nginx 서비스 이름은 항상 monoserver-nginx-main
+4. **안전성**: 실수로 다른 이름 사용 방지
+
+**다음 단계**: GitHub Actions 워크플로우 배포 테스트 (변경 없음)
+
+**블로커**: 없음
+
+---
+
+> 다음 클로드 코드에게:
+> - **v2.4 완성**: nginx 서비스명 하드코딩 적용
+> - **파라미터 2개로 축소**: --compose-path, --output-dir만 사용
+> - **monoserver-nginx-main 고정**: 절대 변경하면 안 됨 (deploy.yml 의존성)
+> - **테스트 5개**: 06-rename-main-service 삭제됨
+> - 다음은 실제 배포 환경 테스트로 진행하면 됩니다
+
 ### 2025-12-27 - v2.3: Docker DNS Resolver 및 동적 DNS 해석
 
 **상태**: ✅ 완료 (v2.3)

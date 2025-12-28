@@ -1,7 +1,0 @@
-services:
-  my-custom-nginx:
-    image: nginx:latest
-
-  hello:
-    image: hello-world
-    x-monoserver-default-port: "5000"

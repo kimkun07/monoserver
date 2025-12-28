@@ -20,8 +20,10 @@ interface ComposeFile {
 interface GeneratorOptions {
   composePath: string;
   outputDir: string;
-  nginxServiceName: string;
 }
+
+// NOTE: deploy.yml will use hardcoded 'monoserver-nginx-main'
+const NGINX_SERVICE_NAME = 'monoserver-nginx-main';
 
 function parseArgs(): GeneratorOptions {
   const args = process.argv.slice(2);
@@ -37,9 +39,6 @@ function parseArgs(): GeneratorOptions {
     } else if (arg === '--output-dir' && nextArg) {
       options.outputDir = nextArg;
       i++;
-    } else if (arg === '--nginx-service' && nextArg) {
-      options.nginxServiceName = nextArg;
-      i++;
     }
   }
 
@@ -47,27 +46,23 @@ function parseArgs(): GeneratorOptions {
   const missing: string[] = [];
   if (!options.composePath) missing.push('--compose-path');
   if (!options.outputDir) missing.push('--output-dir');
-  if (!options.nginxServiceName) missing.push('--nginx-service');
 
   if (missing.length > 0) {
     console.error('❌ Error: Missing required parameters:', missing.join(', '));
     console.error('\nUsage:');
     console.error('  tsx src/index.ts \\');
     console.error('    --compose-path <path-to-compose.yaml> \\');
-    console.error('    --output-dir <output-directory> \\');
-    console.error('    --nginx-service <nginx-service-name>');
+    console.error('    --output-dir <output-directory>');
     console.error('\nExample:');
     console.error('  tsx src/index.ts \\');
     console.error('    --compose-path ../compose.yaml \\');
-    console.error('    --output-dir ../nginx/conf.d \\');
-    console.error('    --nginx-service monoserver-nginx-main');
+    console.error('    --output-dir ../nginx/conf.d');
     process.exit(1);
   }
 
   return {
     composePath: options.composePath!,
     outputDir: options.outputDir!,
-    nginxServiceName: options.nginxServiceName!,
   };
 }
 
@@ -113,7 +108,7 @@ async function generateNginxConfigs(): Promise<void> {
     console.log('Configuration:');
     console.log(`  compose.yaml: ${options.composePath}`);
     console.log(`  Output dir:   ${options.outputDir}`);
-    console.log(`  Nginx service: ${options.nginxServiceName}`);
+    console.log(`  Nginx service: ${NGINX_SERVICE_NAME}`);
     console.log();
 
     // Validate paths before proceeding
@@ -128,6 +123,14 @@ async function generateNginxConfigs(): Promise<void> {
 
     if (!composeData.services) {
       throw new Error('No services found in compose.yaml');
+    }
+
+    // Validate that the nginx service exists
+    if (!composeData.services[NGINX_SERVICE_NAME]) {
+      throw new Error(
+        `Required nginx service "${NGINX_SERVICE_NAME}" not found in compose.yaml.\n` +
+        `The nginx service must be named exactly "${NGINX_SERVICE_NAME}" to work with the deployment system.`
+      );
     }
 
     // Clean up existing conf.d directory
@@ -147,7 +150,7 @@ async function generateNginxConfigs(): Promise<void> {
 
     for (const [serviceName, serviceConfig] of services) {
       // Skip nginx service itself
-      if (serviceName === options.nginxServiceName) {
+      if (serviceName === NGINX_SERVICE_NAME) {
         console.log(`Skipping ${serviceName} (nginx proxy container itself)`);
         continue;
       }

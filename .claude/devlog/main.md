@@ -83,6 +83,19 @@ install-guide.md (P1)
 
 ## 최근 업데이트
 
+### 2025-12-28
+- ✅ **nginx-config-generator v2.5 완성**
+  - **v2.5**: nginx 서비스명 필수 검증 추가
+    - compose.yaml에 monoserver-nginx-main 서비스가 반드시 존재해야 함
+    - 없으면 명확한 에러 메시지와 함께 실패
+    - test/06-wrong-nginx-service 테스트 케이스 추가 (shouldFail: true)
+    - 배포 전 조기 오류 감지로 안정성 향상
+  - **v2.4**: nginxServiceName 파라미터 제거 및 monoserver-nginx-main으로 하드코딩
+    - deploy.yml과 일관성 확보 (하드코딩된 서비스 이름 사용)
+    - CLI 파라미터 3개 → 2개로 축소 (--compose-path, --output-dir)
+  - 모든 테스트 통과 (6/6)
+  - README.md 및 package.json 업데이트
+
 ### 2025-12-27 (저녁)
 - ✅ **GitHub Actions 워크플로우 완성 및 main 브랜치 merge**
   - test-github-actions 브랜치 생성

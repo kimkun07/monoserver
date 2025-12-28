@@ -12,7 +12,6 @@ interface TestConfig {
   params: {
     composePath?: string;
     outputDir?: string;
-    nginxService?: string;
   };
 }
 
@@ -50,9 +49,6 @@ async function runGenerator(caseName: string, config: TestConfig): Promise<{ suc
   }
   if (config.params.outputDir) {
     args.push('--output-dir', join(caseDir, config.params.outputDir));
-  }
-  if (config.params.nginxService) {
-    args.push('--nginx-service', config.params.nginxService);
   }
 
   const command = `tsx src/index.ts ${args.join(' ')}`;

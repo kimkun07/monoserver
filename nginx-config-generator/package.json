@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "generate": "tsx src/index.ts --compose-path ../compose.yaml --output-dir ../nginx/conf.d --nginx-service monoserver-nginx-main",
+    "generate": "tsx src/index.ts --compose-path ../compose.yaml --output-dir ../nginx/conf.d",
     "test": "tsx src/test-runner.ts",
     "test:clean": "rm -rf test/*/nginx/conf.d"
   },

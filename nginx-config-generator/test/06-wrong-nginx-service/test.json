@@ -1,0 +1,9 @@
+{
+  "description": "Should fail when nginx service is not named monoserver-nginx-main",
+  "shouldFail": true,
+  "expectedError": "Required nginx service \"monoserver-nginx-main\" not found",
+  "params": {
+    "composePath": "./compose.yaml",
+    "outputDir": "./nginx/conf.d"
+  }
+}

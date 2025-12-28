@@ -89,6 +89,11 @@ install-guide.md (P1)
 ## 최근 업데이트
 
 ### 2025-12-28
+- ✅ **GitHub Actions 에러 처리 완성**
+  - 포트 80 바인딩 검증 로직 추가
+  - `docker compose up -d`가 성공해도 포트 바인딩이 실패하는 경우 감지
+  - 워크플로우 실패를 정확히 표시 (테스트 완료, Run #20547284146)
+  - 명확한 에러 메시지와 해결 방법 제시
 - ✅ **GitHub Actions workflow_dispatch 추가**
   - 수동 트리거 지원: GitHub UI에서 "Run workflow" 버튼으로 실행 가능
   - test-github-actions 브랜치 트리거 제거 (테스트 완료)

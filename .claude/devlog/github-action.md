@@ -64,6 +64,60 @@ GitHub Repository Settings → Secrets and variables → Actions에 추가:
 
 ## 클로드 코드 일기
 
+### 2025-12-28 - 포트 80 바인딩 검증 로직 추가 및 에러 처리 완성
+
+**상태**: ✅ 완료
+
+**진행 내용**:
+- **문제**: `docker compose up -d`가 성공해도 포트 80 바인딩이 실패할 수 있음
+- **해결**: 포트 80 바인딩을 명시적으로 검증하는 로직 추가
+- 검증 방법: `docker compose ps monoserver-nginx-main | grep "0.0.0.0:80"`
+- 실패 시 명확한 에러 메시지와 해결 방법 출력
+
+**코드 변경**:
+```bash
+# Verify port 80 binding (critical check for rootless docker)
+echo "Verifying port 80 binding..."
+if ! docker compose ps monoserver-nginx-main | grep -q "0.0.0.0:80"; then
+  echo "❌ Error: Port 80 binding failed"
+  echo "This usually means CAP_NET_BIND_SERVICE is not set on rootlesskit binary"
+  echo "Run: sudo setcap cap_net_bind_service=ep \$(which rootlesskit)"
+  echo ""
+  echo "Current container status:"
+  docker compose ps monoserver-nginx-main
+  exit 1
+fi
+echo "✅ Port 80 is successfully bound"
+```
+
+**테스트 결과**:
+- ✅ **워크플로우 실패 감지 성공!** (Run #20547284146)
+- ✅ `docker compose up -d` 실패 시 워크플로우 실패로 표시
+- ✅ 명확한 에러 메시지 출력:
+  ```
+  Error: cannot expose privileged port 80
+  Set CAP_NET_BIND_SERVICE on rootlesskit binary
+  ```
+- ✅ 에러 처리 완벽하게 작동
+
+**효과**:
+- 배포 실패를 즉시 감지
+- 포트 80 문제에 대한 명확한 진단과 해결 방법 제시
+- 워크플로우 상태가 실제 배포 상태를 정확히 반영
+
+**커밋**:
+- `[github-action] 포트 80 바인딩 검증 로직 추가`
+
+**다음 단계**:
+- GCE 서버에서 포트 80 권한 문제 해결
+
+---
+
+> 다음 클로드 코드에게:
+> - **에러 처리 완성!** 이제 배포 실패를 정확히 감지합니다
+> - 다음은 GCE 서버에서 `sudo setcap cap_net_bind_service=ep $(which rootlesskit)` 실행
+> - 또는 `/etc/sysctl.conf`에 `net.ipv4.ip_unprivileged_port_start=80` 추가
+
 ### 2025-12-28 - workflow_dispatch 추가 및 수동 트리거 지원
 
 **상태**: ✅ 완료

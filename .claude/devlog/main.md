@@ -89,6 +89,12 @@ install-guide.md (P1)
 ## 최근 업데이트
 
 ### 2025-12-28
+- ✅ **nginx-config-generator v3.3 완성**
+  - nginx.conf와 routes.conf 구조 분리
+  - server 블록은 nginx.conf로 이동, routes.conf는 location만 포함
+  - 명확한 책임 분리: 인프라 설정 vs 서비스 라우팅
+  - README.md 전면 개편: path-based routing 가이드 완성
+  - 커밋: 59f52b0
 - ✅ **nginx-config-generator v3.2 완성**
   - compose.yaml에서 명시적 bind mount 형식 사용
   - 가독성 향상 및 mount 타입 명확화

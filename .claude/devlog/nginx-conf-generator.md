@@ -58,6 +58,46 @@
 
 ## 클로드 코드 일기
 
+### 2025-12-28 - v3.3: nginx.conf와 routes.conf 구조 분리
+
+**상태**: ✅ 완료 (v3.3)
+
+**커밋**: 59f52b0
+
+**진행 내용**:
+- **nginx.conf 구조 개선**: server 블록을 nginx.conf로 이동
+  - routes.conf는 location 블록만 포함하도록 변경
+  - nginx.conf에서 `include /etc/nginx/routes.conf;`로 삽입
+  - 더 명확한 계층 구조: nginx.conf (전체 구조) + routes.conf (서비스별 라우팅)
+- **generator 코드 수정**:
+  - `generateServerConfig()` → `generateRoutesConfig()` 함수명 변경
+  - server 블록, listen, server_name, default location 제거
+  - location 블록만 생성하는 단순한 구조
+- **테스트 케이스 업데이트**:
+  - test/02, 04, 05의 expected/routes.conf 파일 업데이트
+  - 모든 테스트 통과 (5/5)
+- **실제 routes.conf 재생성**: npm run generate로 즉시 반영
+
+**테스트 결과**:
+- ✅ 5/5 테스트 케이스 통과
+- ✅ nginx 재시작 없이 정상 작동
+
+**주요 개선사항**:
+1. **명확한 책임 분리**: nginx.conf (인프라) vs routes.conf (서비스 라우팅)
+2. **유지보수 용이**: server 블록은 수동 관리, location만 자동 생성
+3. **include 유연성**: server 블록 내에서 원하는 위치에 routes.conf 삽입 가능
+
+**다음 단계**: 안정적 운영, 추가 개선사항 없음
+
+**블로커**: 없음
+
+---
+
+> 다음 클로드 코드에게:
+> - **v3.3 완성**: nginx.conf에 server 블록 포함, routes.conf는 location만
+> - **include 방식**: server 블록 내에서 routes.conf include
+> - **책임 분리**: 인프라 설정(nginx.conf) vs 서비스 라우팅(routes.conf)
+
 ### 2025-12-28 - v3.2: Docker bind mount를 명시적 형식으로 변경
 
 **상태**: ✅ 완료 (v3.2)

@@ -104,13 +104,17 @@ install-guide.md (P1)
   - ✅ GCE 서버 환경 확인 완료 (최종 검증은 배포 수정 후)
   - ✅ GitHub Secrets 설정 완료 (GCE_HOST, GCE_USER, GCE_SSH_KEY)
   - ✅ deploy 스크립트 SSH 접속 확인
-  - ❌ **배포 실패 문제 발견**:
-    1. deploy.yml 에러 처리 문제: 실패해도 워크플로우가 성공으로 표시됨
-    2. 포트 80 권한 문제: CAP_NET_BIND_SERVICE 설정 미적용
+  - ✅ **deploy.yml 에러 처리 수정 완료**
+    - `script_stop: true` 추가
+    - bash strict mode 설정 (`set -e`, `set -u`, `set -o pipefail`)
+    - 각 명령어에 명시적 에러 처리 및 명확한 에러 메시지
+    - 이제 배포 실패 시 워크플로우도 실패로 표시됨
+  - ❌ **남은 문제**:
+    - 포트 80 권한 문제: CAP_NET_BIND_SERVICE 설정 미적용
   - 📝 **Nice To Have**: nginx-conf-generator Docker 이미지화는 불필요하다고 판단
     - tsx 설치가 빠르고 간단함
     - 작업하지 않기로 결정
-- 🟢 다음: deploy.yml 에러 처리 수정 → 포트 80 권한 문제 해결 → 배포 재테스트
+- 🟢 다음: 포트 80 권한 문제 해결 → 배포 재테스트
 
 ### 2025-12-27 (저녁)
 - ✅ **GitHub Actions 워크플로우 완성 및 main 브랜치 merge**

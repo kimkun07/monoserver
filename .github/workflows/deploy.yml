@@ -62,25 +62,39 @@ jobs:
         host: ${{ secrets.GCE_HOST }}
         username: ${{ secrets.GCE_USER }}
         key: ${{ secrets.GCE_SSH_KEY }}
+        script_stop: true
         script: |
-          cd monoserver
+          set -e  # Exit immediately if a command exits with a non-zero status
+          set -u  # Treat unset variables as an error
+          set -o pipefail  # Catch errors in pipes
+
+          echo "Starting deployment to GCE..."
+
+          cd monoserver || { echo "❌ Error: monoserver directory not found"; exit 1; }
 
           # Pull latest changes
-          git pull origin main
+          echo "Pulling latest changes from main branch..."
+          git pull origin main || { echo "❌ Error: git pull failed"; exit 1; }
 
           # Update Docker containers (only changed services will restart)
-          docker compose up -d
+          echo "Updating Docker containers..."
+          docker compose up -d || { echo "❌ Error: docker compose up failed"; exit 1; }
+
+          # Wait a moment for containers to start
+          sleep 3
 
           # Reload Nginx to pick up config changes (zero-downtime)
-          docker compose exec monoserver-nginx-main nginx -s reload
+          echo "Reloading Nginx configuration..."
+          docker compose exec monoserver-nginx-main nginx -s reload || { echo "❌ Error: nginx reload failed"; exit 1; }
 
           # Show status
+          echo ""
           echo "=== Container Status ==="
           docker compose ps
 
           echo ""
           echo "=== Nginx Config Test ==="
-          docker compose exec monoserver-nginx-main nginx -t
+          docker compose exec monoserver-nginx-main nginx -t || { echo "❌ Error: nginx config test failed"; exit 1; }
 
           echo ""
-          echo "Deployment completed successfully!"
+          echo "✅ Deployment completed successfully!"

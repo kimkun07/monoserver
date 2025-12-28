@@ -64,6 +64,55 @@ GitHub Repository Settings → Secrets and variables → Actions에 추가:
 
 ## 클로드 코드 일기
 
+### 2025-12-28 - deploy.yml 에러 처리 강화
+
+**상태**: ✅ 완료
+
+**진행 내용**:
+- **문제**: Deploy to GCE 단계가 실패해도 워크플로우가 성공으로 표시됨
+- **원인**: appleboy/ssh-action이 스크립트 내부 에러를 제대로 감지하지 못함
+- **해결책**:
+  - `script_stop: true` 추가: SSH 액션이 스크립트 실패를 감지하도록 설정
+  - `set -e`: 에러 발생 시 즉시 스크립트 중단
+  - `set -u`: 정의되지 않은 변수 사용 시 에러
+  - `set -o pipefail`: 파이프라인 중 하나라도 실패하면 전체 실패
+  - 각 중요 명령어에 `|| { echo "❌ Error: ..."; exit 1; }` 패턴 적용
+  - 에러 메시지 명확화 (❌ 아이콘 사용)
+  - `sleep 3` 추가: 컨테이너 시작 대기
+
+**개선된 에러 처리**:
+```bash
+set -e  # Exit on error
+set -u  # Error on unset variables
+set -o pipefail  # Catch errors in pipes
+
+cd monoserver || { echo "❌ Error: monoserver directory not found"; exit 1; }
+git pull origin main || { echo "❌ Error: git pull failed"; exit 1; }
+docker compose up -d || { echo "❌ Error: docker compose up failed"; exit 1; }
+# ... 등등
+```
+
+**코드 변경**:
+- `.github/workflows/deploy.yml:65`: `script_stop: true` 추가
+- `.github/workflows/deploy.yml:67-69`: bash strict mode 설정
+- `.github/workflows/deploy.yml:73-97`: 각 명령어에 에러 처리 추가
+
+**테스트 결과**:
+- 🟡 포트 80 권한 문제 해결 후 테스트 예정
+
+**다음 단계**:
+- 포트 80 권한 문제 해결
+- 배포 재테스트
+
+**블로커**: 포트 80 권한 문제
+
+---
+
+> 다음 클로드 코드에게:
+> - **에러 처리 완료**: 이제 배포 실패 시 워크플로우도 실패로 표시됩니다
+> - **명확한 에러 메시지**: 어디서 실패했는지 즉시 확인 가능
+> - 다음은 포트 80 권한 문제 해결
+
 ### 2025-12-27 (저녁) - 테스트 브랜치에서 GitHub Actions 테스트
 
 **상태**: 🟢 진행중

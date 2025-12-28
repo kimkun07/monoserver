@@ -7,14 +7,14 @@ Declarative Docker container orchestration with automatic deployment via Git com
 
 ## Overview
 
-**monoserver** automates the deployment of Docker containers with subdomain-based routing. Define your services in `compose.yaml`, push to GitHub, and let GitHub Actions handle the rest.
+**monoserver** automates the deployment of Docker containers with path-based routing. Define your services in `compose.yaml`, push to GitHub, and let GitHub Actions handle the rest.
 
 ### Key Features
 
 - **Git-based deployment**: Push to GitHub triggers automatic container updates
 - **Declarative configuration**: Services defined in standard `compose.yaml`
 - **Automatic reverse proxy**: Nginx configs generated from service definitions
-- **Subdomain routing**: Access services via `service.yourdomain.com`
+- **Path-based routing**: Access services via `/service/` paths (no DNS configuration needed)
 - **Zero-downtime updates**: Nginx reload without service interruption
 
 ## Architecture
@@ -41,7 +41,7 @@ GitHub Repository (compose.yaml)
 
 - Google Compute Engine instance (or any Linux server with SSH access)
 - GitHub account
-- Domain with DNS access (optional, can use `.localhost` for local testing)
+- No domain or DNS configuration needed (uses path-based routing)
 
 ### Step 1: Fork Repository
 
@@ -142,14 +142,7 @@ Client:
 Server:
  Containers:        3 (Running: 0, Stopped: 3)
  Server Version:    29.0.3
- Security Options:  name=seccomp,profile=builtin name=rootless name=cgroupns 
-```
-
-**After installation completes, log out and log back in** for changes to take effect:
-[TODO] logout 스텝이 필요한가?
-```bash
-exit
-# SSH back into the instance
+ Security Options:  name=seccomp,profile=builtin name=rootless name=cgroupns
 ```
 
 **Verify Docker is working:**
@@ -192,60 +185,91 @@ cat ~/.ssh/github_actions
 
 **Important:** Make sure to copy the **entire** private key including the `-----BEGIN OPENSSH PRIVATE KEY-----` and `-----END OPENSSH PRIVATE KEY-----` lines.
 
-### Step 4: Test Automatic Deployment
+### Step 4: Deploy and Test
 
-Now test the GitHub Actions workflow:
+#### 4.1. Trigger Initial Deployment
 
-#### 4.1. Make a test change
+Manually trigger the GitHub Actions workflow to deploy your containers:
 
-On your **local machine** (or directly on GitHub):
+1. Go to your forked repository on GitHub
+2. Click the **Actions** tab
+3. Click on **"Deploy to Google Compute Engine"** workflow (left sidebar)
+4. Click the **"Run workflow"** button (right side)
+5. Select the `main` branch
+6. Click **"Run workflow"** to start deployment
+
+#### 4.2. Monitor Deployment
+
+Watch the workflow execution:
+
+1. The workflow run will appear in the list
+2. Click on it to see detailed logs
+3. Wait for all steps to complete (usually takes 30-60 seconds)
+
+**What the workflow does:**
+1. ✅ Generates nginx routes config from `compose.yaml`
+2. ✅ Commits changes to `nginx/routes.conf` (if any)
+3. ✅ SSHs into your GCE instance
+4. ✅ Pulls latest code
+5. ✅ Runs `docker compose up -d` (starts all containers)
+6. ✅ Reloads nginx configuration
+
+#### 4.3. Access Your Services
+
+Once deployment completes, access your services using the **server's IP address**:
+
+**Get your server IP:**
+```bash
+# On your GCE instance
+curl ifconfig.me
+```
+
+**Access via browser:**
+- `http://YOUR_IP/` → Nginx welcome page
+- `http://YOUR_IP/hello/` → Hello service
+- `http://YOUR_IP/whoami/` → Whoami service
+
+**Test from command line:**
+```bash
+# Replace YOUR_IP with your server's IP address
+curl http://YOUR_IP/
+curl http://YOUR_IP/hello/
+curl http://YOUR_IP/whoami/
+```
+
+### Step 5: Make Changes and Auto-Deploy
+
+Now test the automatic deployment by adding a new service:
+
+#### 5.1. Add a New Service
+
+Edit `compose.yaml` on GitHub or locally and add a new service:
+
+```yaml
+services:
+  # ... existing services ...
+
+  hello2:
+    image: crccheck/hello-world:latest
+    x-monoserver-default-port: "8000"
+```
+
+#### 5.2. Commit and Push
 
 ```bash
-# Add a new service to compose.yaml
-# For example, add whoami service if not present
 git add compose.yaml
-git commit -m "test: add new service"
+git commit -m "feat: add hello2 service"
 git push origin main
 ```
 
-#### 4.2. Monitor GitHub Actions
+#### 5.3. Watch Auto-Deployment
 
-1. Go to your repository on GitHub
-2. Click the **Actions** tab
-3. You should see a workflow run starting
-4. Click on it to see detailed logs
+1. Go to **Actions** tab on GitHub
+2. You'll see a new workflow run triggered automatically
+3. Wait for it to complete
+4. Access the new service: `http://YOUR_IP/hello2/`
 
-**What the workflow does:**
-1. ✅ Generates nginx config files from `compose.yaml`
-2. ✅ Commits changes to `nginx/conf.d/` (if any)
-3. ✅ SSHs into your GCE instance
-4. ✅ Pulls latest code
-5. ✅ Runs `docker compose up -d` (updates only changed services)
-6. ✅ Reloads nginx configuration
-
-#### 4.3. Verify deployment
-
-```bash
-# First, SSH into your server
-
-# Check container status
-cd monoserver
-docker compose ps
-
-# Verify nginx picked up new configs
-docker compose exec monoserver-nginx-main ls -la /etc/nginx/conf.d/
-
-# Test the services
-curl http://localhost/
-curl -H "Host: hello.localhost" http://localhost/
-curl -H "Host: whoami.localhost" http://localhost/
-```
-
-### Step 5: Access Your Services
-
-If you configured DNS:
-- `http://hello.yourdomain.com` → hello service
-- `http://yourdomain.com` → nginx default page
+**No manual intervention needed!** Every time you push changes to `compose.yaml`, the deployment happens automatically.
 
 
 ## How Automatic Updates Work
@@ -253,14 +277,14 @@ If you configured DNS:
 ### When you change `compose.yaml`
 
 1. **Trigger**: GitHub Actions detects changes to `compose.yaml`
-2. **Generate**: Nginx configs are automatically regenerated
-3. **Commit**: Changes to `nginx/conf.d/` are committed back to the repo
+2. **Generate**: `nginx/routes.conf` is automatically regenerated with path-based routes
+3. **Commit**: Changes to `nginx/routes.conf` are committed back to the repo
 4. **Deploy**: Server pulls changes and updates containers
 5. **Reload**: Nginx reloads configuration **without downtime**
 
 **Key point:** `docker compose up -d` only restarts containers that changed. Unchanged containers keep running.
 
-### When `nginx/conf.d/` files change
+### When `nginx/routes.conf` changes
 
 The workflow automatically runs:
 ```bash
@@ -268,7 +292,7 @@ docker compose exec monoserver-nginx-main nginx -s reload
 ```
 
 This tells nginx to:
-- ✅ Read new configuration files
+- ✅ Read new configuration file
 - ✅ Start new worker processes with new config
 - ✅ Gracefully shut down old worker processes
 - ✅ **Zero downtime** - no dropped connections
@@ -276,80 +300,77 @@ This tells nginx to:
 ### When services are added/removed
 
 **Adding a service:**
-1. Add to `compose.yaml` with `x-monoserver-default-port`
+1. Add to `compose.yaml` with `x-monoserver-default-port` (optional)
 2. Push to GitHub
-3. GitHub Actions generates new `.conf` file
+3. GitHub Actions regenerates `routes.conf` with new `/service/` path
 4. Server starts the new container
-5. Nginx adds the new route
+5. Nginx adds the new route automatically
 
 **Removing a service:**
 1. Remove from `compose.yaml`
 2. Push to GitHub
-3. GitHub Actions removes old `.conf` file
+3. GitHub Actions regenerates `routes.conf` without that service
 4. Server stops the container
-5. Nginx removes the route
+5. Nginx removes the route automatically
 
-**No manual intervention needed!**
+**No manual intervention needed!** Path-based routing requires no DNS configuration.
 
 ## Usage
 
 ### Adding a New Service
 
-1. Edit `compose.yaml`:
+1. Edit `compose.yaml` and add your service:
    ```yaml
    services:
-     nginx-main:
+     monoserver-nginx-main:
        image: nginx:1.27.3
-       ports:
-       - "80:80"
-       volumes:
-       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+       # ... nginx config ...
+
+     hello:
+       image: crccheck/hello-world:latest
+       x-monoserver-default-port: "8000"
 
      myapp:
        image: myapp:latest
-       labels:
-       - "service-title=My Application"
+       x-monoserver-default-port: "8080"  # The port your app listens on
    ```
 
-2. Create Nginx config `nginx/conf.d/myapp.conf`:
-   ```nginx
-   server {
-     listen       80;
-     server_name  myapp.localhost;
+   **Note:** `x-monoserver-default-port` tells nginx which port to proxy to. If omitted, nginx uses the port the client connected to.
 
-     location / {
-       proxy_pass http://myapp:8080/;
-     }
-   }
-   ```
-
-3. Commit and push:
+2. Commit and push:
    ```bash
-   git add compose.yaml nginx/conf.d/myapp.conf
+   git add compose.yaml
    git commit -m "feat: add myapp service"
    git push origin main
    ```
 
-GitHub Actions will automatically deploy your changes.
+3. Access your service:
+   ```bash
+   # After GitHub Actions completes deployment
+   curl http://YOUR_IP/myapp/
+   ```
+
+**That's it!** No need to manually create nginx configs. The generator creates path-based routes automatically:
+- `compose.yaml` service `myapp` → nginx route `/myapp/` → backend `http://myapp:8080/`
 
 ## Project Structure
 
 ```
 monoserver/
-├── compose.yaml              # Docker Compose service definitions
+├── compose.yaml                    # Docker Compose service definitions
 ├── nginx/
-│   ├── nginx.conf           # Main Nginx configuration
-│   └── conf.d/              # Service-specific proxy configs
-│       └── *.conf
-├── apps/
-│   ├── manager/             # CLI tool for local management
-│   └── landing/             # Example Express.js app
-├── packages/
-│   └── service/             # Shared service schema & types
+│   ├── nginx.conf                 # Main Nginx configuration
+│   └── routes.conf                # Auto-generated path-based routes
+├── nginx-config-generator/         # TypeScript generator for routes.conf
+│   ├── src/
+│   │   ├── index.ts               # Main generator logic
+│   │   └── test-runner.ts         # Test suite
+│   └── test/                      # Test cases
+├── scripts/
+│   └── install-docker-rootless.sh # Docker installation script
 └── .github/
     └── workflows/
-        └── deploy.yml       # Deployment automation
+        └── deploy.yml             # Deployment automation
 ```
 
 ## Local Development
@@ -357,20 +378,22 @@ monoserver/
 For local development and testing without deploying to server:
 
 ```bash
-# Install dependencies
-pnpm install
+# Generate nginx routes configuration
+cd nginx-config-generator
+npm install
+npm run generate
 
-# Validate service configurations
-pnpm --filter manager validate-services
-
-# Generate Nginx configs
-pnpm --filter manager update-conf-files
-
-# Test locally with Docker Compose
+# Start all services locally
+cd ..
 docker compose up
 
 # Check service status
 docker compose ps
+
+# Test services locally
+curl http://localhost/
+curl http://localhost/hello/
+curl http://localhost/whoami/
 
 # View logs
 docker compose logs -f
@@ -393,9 +416,10 @@ export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock
 - Ensure firewall allows SSH (port 22)
 
 ### Services not accessible
-- Check Nginx is running: `docker compose ps nginx-main`
-- Verify Nginx configs: `docker compose exec nginx-main nginx -t`
-- Check DNS or `/etc/hosts` configuration
+- Check Nginx is running: `docker compose ps monoserver-nginx-main`
+- Verify Nginx configs: `docker compose exec monoserver-nginx-main nginx -t`
+- Check routes.conf was generated: `cat nginx/routes.conf`
+- Test path-based routing: `curl http://YOUR_IP/hello/`
 
 ### Port conflicts
 - Ensure only one service binds to port 80 (nginx-main)

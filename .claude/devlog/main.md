@@ -89,6 +89,22 @@ install-guide.md (P1)
 ## 최근 업데이트
 
 ### 2025-12-28
+- ✅ **nginx-config-generator v3.2 완성**
+  - compose.yaml에서 명시적 bind mount 형식 사용
+  - 가독성 향상 및 mount 타입 명확화
+  - 커밋: 8a25fad
+- ✅ **nginx-config-generator v3.1 완성**
+  - root path(/)에 nginx welcome page 추가
+  - Docker bind mount 호환성 개선 (rm() 제거, inode 유지)
+  - nginx reload만으로 즉시 반영 가능
+  - 커밋: 1310b63
+- ✅ **nginx-config-generator v3.0 완성** (중요 변경)
+  - **Subdomain → Path 기반 라우팅으로 완전 전환**
+    - 이전: hello.localhost → 이후: /hello/
+  - **파일 구조 대폭 단순화**: conf.d/*.conf → routes.conf 단일 파일
+  - DNS 설정 불필요, IP 주소만으로 모든 서비스 접근 가능
+  - Breaking Changes: subdomain 방식 사용 불가
+  - 커밋: fb16f3b
 - ✅ **포트 80 권한 문제 해결**
   - 원인: CAP_NET_BIND_SERVICE 설정 후 docker restart 누락
   - 해결: `systemctl --user restart docker` 실행

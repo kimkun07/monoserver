@@ -58,6 +58,121 @@
 
 ## 클로드 코드 일기
 
+### 2025-12-28 - v3.2: Docker bind mount를 명시적 형식으로 변경
+
+**상태**: ✅ 완료 (v3.2)
+
+**커밋**: 8a25fad
+
+**진행 내용**:
+- **compose.yaml 볼륨 마운트 형식 변경**: 짧은 형식 → 명시적 bind mount 형식
+  - 이전: `- ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro`
+  - 변경: `- type: bind, source: ./nginx/nginx.conf, target: /etc/nginx/nginx.conf, read_only: true`
+- **가독성 향상**: 명시적 형식으로 mount 타입과 옵션이 명확해짐
+- **테스트 검증**: generate → reload → 즉시 반영 확인 완료
+
+**테스트 결과**:
+- ✅ 5/5 테스트 케이스 통과
+- ✅ Docker 볼륨 마운트 정상 작동
+
+**다음 단계**: 추가 개선사항 없음, 안정적 운영
+
+**블로커**: 없음
+
+---
+
+> 다음 클로드 코드에게:
+> - **v3.2 완성**: compose.yaml에서 명시적 bind mount 형식 사용
+> - **테스트 통과**: 모든 기능 정상 작동
+
+### 2025-12-28 - v3.1: root path에 nginx 기본 페이지 추가 및 Docker bind mount 문제 수정
+
+**상태**: ✅ 완료 (v3.1)
+
+**커밋**: 1310b63
+
+**진행 내용**:
+- **root path(/) 추가**: nginx welcome page 제공하도록 default location block 추가
+  - 서비스별 path (/hello/, /whoami/)가 아닌 root path로 접속 시 기본 페이지 표시
+- **Docker bind mount 호환성 개선**: rm() 제거하여 파일 inode 유지
+  - 기존 문제: 파일 삭제 후 재생성 → 새 inode 생성 → 컨테이너는 삭제된 파일 참조
+  - 해결: writeFile로 덮어쓰기만 → inode 유지 → `nginx -s reload`만으로 즉시 반영
+- **코드 변경**:
+  - `src/index.ts:141-144`: rm() 호출 제거, 주석으로 이유 설명
+  - `generateServerConfig()`: default location block 추가
+- **모든 테스트 케이스 업데이트**: expected 파일에 root location 추가
+
+**테스트 결과**:
+- ✅ 5/5 테스트 케이스 통과
+- ✅ Docker bind mount에서 nginx reload 즉시 반영 확인
+
+**주요 개선사항**:
+1. **UX 향상**: root path 접속 시 404 대신 welcome page
+2. **운영 편의성**: 파일 변경 후 컨테이너 재시작 불필요
+3. **안정성**: inode 유지로 bind mount 안정성 향상
+
+**다음 단계**: 추가 테스트 및 배포
+
+**블로커**: 없음
+
+---
+
+> 다음 클로드 코드에게:
+> - **v3.1 완성**: root path 기본 페이지 추가 및 bind mount 문제 해결
+> - **중요**: routes.conf 파일을 절대 삭제하지 말 것 (inode 유지 필수)
+> - **nginx reload**: 파일 변경 후 reload만으로 즉시 반영됨
+
+### 2025-12-28 - v3.0: path 기반 라우팅으로 변경 및 구조 단순화
+
+**상태**: ✅ 완료 (v3.0)
+
+**커밋**: fb16f3b
+
+**진행 내용**:
+- **Subdomain → Path 기반 라우팅으로 완전 전환**
+  - 이전: `hello.localhost` → `hello:5678`
+  - 이후: `/hello/` → `hello:5678` (path prefix 자동 제거)
+- **파일 구조 대폭 단순화**:
+  - 이전: `nginx/conf.d/hello.conf`, `nginx/conf.d/whoami.conf` (서비스당 1개 파일)
+  - 이후: `nginx/routes.conf` (모든 서비스를 단일 파일로 통합)
+- **conf.d 디렉토리 완전 제거**: nginx/routes.conf로 단순화
+- **x-monoserver-listen-ports 설정 제거**: path 기반에서 불필요
+- **테스트 케이스 정리**:
+  - test/03-with-listen-ports 삭제 (listen ports는 더 이상 사용 안 함)
+  - 5개 테스트 케이스로 축소 (6개 → 5개)
+- **nginx.conf 구조 변경**:
+  - `include /etc/nginx/conf.d/*.conf` → `include /etc/nginx/routes.conf`
+- **compose.yaml 볼륨 마운트 수정**:
+  - `./nginx/conf.d:/etc/nginx/conf.d:ro` 제거
+  - `./nginx/routes.conf:/etc/nginx/routes.conf:ro` 추가
+- **deploy.yml 수정**: nginx 재시작 로직 업데이트
+
+**테스트 결과**:
+- ✅ 5/5 테스트 케이스 통과
+- ✅ 실제 배포 환경에서 path 기반 라우팅 확인
+
+**주요 개선사항**:
+1. **단순화**: 서비스당 1개 파일 → 모든 서비스가 1개 파일
+2. **관리 용이**: routes.conf 하나만 관리하면 됨
+3. **DNS 불필요**: localhost 하나로 모든 서비스 접근 가능
+4. **배포 편의성**: IP 주소만으로 바로 접근 가능 (subdomain 설정 불필요)
+
+**Breaking Changes**:
+- 기존 subdomain 기반 접근 불가능 (hello.localhost → /hello/)
+- x-monoserver-listen-ports 필드 제거
+
+**다음 단계**: 실제 배포 테스트 및 문서 업데이트
+
+**블로커**: 없음
+
+---
+
+> 다음 클로드 코드에게:
+> - **v3.0 완성**: subdomain → path 기반 라우팅으로 완전 전환
+> - **파일 구조**: nginx/routes.conf 단일 파일 사용
+> - **테스트 5개**: listen-ports 관련 테스트 제거됨
+> - **Breaking Change**: 기존 subdomain 방식 사용 불가
+
 ### 2025-12-28 - v2.5: nginx 서비스명 필수 검증
 
 **상태**: ✅ 완료 (v2.5)

@@ -3,6 +3,6 @@
   "shouldFail": true,
   "expectedError": "Missing required parameters",
   "params": {
-    "outputDir": "./nginx/conf.d"
+    "outputDir": "./nginx"
   }
 }

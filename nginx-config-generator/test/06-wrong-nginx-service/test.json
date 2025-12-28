@@ -4,6 +4,6 @@
   "expectedError": "Required nginx service \"monoserver-nginx-main\" not found",
   "params": {
     "composePath": "./compose.yaml",
-    "outputDir": "./nginx/conf.d"
+    "outputDir": "./nginx"
   }
 }

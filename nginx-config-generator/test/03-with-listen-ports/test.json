@@ -1,8 +1,0 @@
-{
-  "description": "Should generate configs with multiple listen ports when x-monoserver-listen-ports is specified",
-  "shouldFail": false,
-  "params": {
-    "composePath": "./compose.yaml",
-    "outputDir": "./nginx/conf.d"
-  }
-}

@@ -7,7 +7,6 @@ import yaml from 'js-yaml';
 interface ComposeService {
   image?: string;
   'x-monoserver-default-port'?: string | number;
-  'x-monoserver-listen-ports'?: number[];
   [key: string]: any;
 }
 
@@ -56,7 +55,7 @@ function parseArgs(): GeneratorOptions {
     console.error('\nExample:');
     console.error('  tsx src/index.ts \\');
     console.error('    --compose-path ../compose.yaml \\');
-    console.error('    --output-dir ../nginx/conf.d');
+    console.error('    --output-dir ../nginx');
     process.exit(1);
   }
 
@@ -133,20 +132,24 @@ async function generateNginxConfigs(): Promise<void> {
       );
     }
 
-    // Clean up existing conf.d directory
+    // Ensure output directory exists
     // This is safe because we validated that nginx/nginx.conf exists
-    console.log('Cleaning up existing output directory...');
-    try {
-      await rm(options.outputDir, { recursive: true, force: true });
-    } catch (error) {
-      // Directory might not exist, that's ok
-    }
+    console.log('Ensuring output directory exists...');
     await mkdir(options.outputDir, { recursive: true });
 
-    // Generate configs for each service
-    console.log(`\nNow generating config files...`);
+    // Remove old routes.conf if it exists
+    const confFilePath = join(options.outputDir, 'routes.conf');
+    try {
+      await rm(confFilePath, { force: true });
+    } catch (error) {
+      // File might not exist, that's ok
+    }
+
+    // Generate location blocks for each service
+    console.log(`\nNow generating config file...`);
     const services = Object.entries(composeData.services);
-    let generatedCount = 0;
+    const locationBlocks: string[] = [];
+    let serviceCount = 0;
 
     for (const [serviceName, serviceConfig] of services) {
       // Skip nginx service itself
@@ -155,30 +158,33 @@ async function generateNginxConfigs(): Promise<void> {
         continue;
       }
 
-      // Generate nginx config (even if no default port is specified)
-      const nginxConfig = generateNginxConfig(serviceName, serviceConfig);
-      const confFilePath = join(options.outputDir, `${serviceName}.conf`);
+      // Generate location block for this service
+      const locationBlock = generateLocationBlock(serviceName, serviceConfig);
+      locationBlocks.push(locationBlock);
 
       const portInfo = serviceConfig['x-monoserver-default-port']
-        ? `default port: ${serviceConfig['x-monoserver-default-port']}`
-        : 'using $server_port';
-      const listenPorts = serviceConfig['x-monoserver-listen-ports'] || [80];
+        ? `port: ${serviceConfig['x-monoserver-default-port']}`
+        : 'port: $server_port';
 
-      console.log(`Generating ${serviceName}.conf (${portInfo}, listen: ${listenPorts.join(', ')})...`);
-      await writeFile(confFilePath, nginxConfig, 'utf-8');
-      generatedCount++;
+      console.log(`Adding /${serviceName}/ route (${portInfo})`);
+      serviceCount++;
     }
 
-    console.log(`\n✅ Successfully generated ${generatedCount} nginx config file(s) in ${options.outputDir}`);
+    // Combine all location blocks into a single server block
+    const nginxConfig = generateServerConfig(locationBlocks);
+
+    console.log(`\nWriting routes.conf...`);
+    await writeFile(confFilePath, nginxConfig, 'utf-8');
+
+    console.log(`\n✅ Successfully generated nginx config with ${serviceCount} route(s) in ${options.outputDir}`);
   } catch (error) {
     console.error('❌ Error generating nginx configs:', error);
     process.exit(1);
   }
 }
 
-function generateNginxConfig(serviceName: string, serviceConfig: ComposeService): string {
+function generateLocationBlock(serviceName: string, serviceConfig: ComposeService): string {
   const defaultPort = serviceConfig['x-monoserver-default-port'];
-  const listenPorts = serviceConfig['x-monoserver-listen-ports'] || [80];
 
   // Build proxy_pass URL using variables for dynamic DNS resolution
   // Using variables forces nginx to resolve DNS at request time, not at startup
@@ -186,25 +192,33 @@ function generateNginxConfig(serviceName: string, serviceConfig: ComposeService)
   const port = defaultPort || '$server_port';
   const upstreamVar = `upstream_${serviceName.replace(/-/g, '_')}`;
 
-  // Build listen directives
+  // Path-based routing: /servicename/ -> http://servicename:port/
+  // The trailing slash in proxy_pass is critical: it removes the /servicename prefix
+  // Example: /hello/abc -> http://hello:5678/abc (not /hello/abc)
+  return `  # Route for service: ${serviceName}
+  location /${serviceName}/ {
+    # Using a variable forces nginx to resolve DNS at request time
+    # This prevents startup failures when upstream containers aren't ready yet
+    set $${upstreamVar} ${serviceName};
+    proxy_pass http://$${upstreamVar}:${port}/;
+  }`;
+}
+
+function generateServerConfig(locationBlocks: string[]): string {
+  const listenPorts = [80]; // Default to port 80
   const listenDirectives = listenPorts
     .map(port => `  listen       ${port};`)
     .join('\n');
 
   return `# This file is auto-generated by nginx-config-generator
 # DO NOT EDIT MANUALLY - changes will be overwritten
-# Generated from compose.yaml service: ${serviceName}
+# Path-based routing for all services
 
 server {
 ${listenDirectives}
-  server_name  ${serviceName}.localhost;
+  server_name  _;  # Accept all hostnames/IPs
 
-  location / {
-    # Using a variable forces nginx to resolve DNS at request time
-    # This prevents startup failures when upstream containers aren't ready yet
-    set $${upstreamVar} ${serviceName};
-    proxy_pass http://$${upstreamVar}:${port}/;
-  }
+${locationBlocks.join('\n\n')}
 }
 `;
 }

@@ -1,8 +1,8 @@
 {
-  "description": "Should use default listen port [80] when x-monoserver-listen-ports is not specified",
+  "description": "Should generate path-based routing config with single service",
   "shouldFail": false,
   "params": {
     "composePath": "./compose.yaml",
-    "outputDir": "./nginx/conf.d"
+    "outputDir": "./nginx"
   }
 }

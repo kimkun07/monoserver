@@ -6,9 +6,9 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "generate": "tsx src/index.ts --compose-path ../compose.yaml --output-dir ../nginx/conf.d",
+    "generate": "tsx src/index.ts --compose-path ../compose.yaml --output-dir ../nginx",
     "test": "tsx src/test-runner.ts",
-    "test:clean": "rm -rf test/*/nginx/conf.d"
+    "test:clean": "rm -f test/*/nginx/routes.conf"
   },
   "keywords": [
     "nginx",

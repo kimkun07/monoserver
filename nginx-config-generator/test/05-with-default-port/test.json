@@ -3,6 +3,6 @@
   "shouldFail": false,
   "params": {
     "composePath": "./compose.yaml",
-    "outputDir": "./nginx/conf.d"
+    "outputDir": "./nginx"
   }
 }

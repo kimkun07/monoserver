@@ -67,60 +67,24 @@ async function runGenerator(caseName: string, config: TestConfig): Promise<{ suc
 
 async function compareOutputs(caseName: string): Promise<{ passed: boolean; message: string; details?: string }> {
   const caseDir = join(process.cwd(), 'test', caseName);
-  const expectedDir = join(caseDir, 'expected');
-  const actualDir = join(caseDir, 'nginx', 'conf.d');
+  const expectedFile = join(caseDir, 'expected', 'routes.conf');
+  const actualFile = join(caseDir, 'nginx', 'routes.conf');
 
   try {
-    const expectedFiles = await readdir(expectedDir);
-    const actualFiles = await readdir(actualDir);
+    const expectedContent = await readFile(expectedFile, 'utf-8');
+    const actualContent = await readFile(actualFile, 'utf-8');
 
-    // Check file counts
-    if (expectedFiles.length !== actualFiles.length) {
+    if (expectedContent !== actualContent) {
       return {
         passed: false,
-        message: `File count mismatch: expected ${expectedFiles.length}, got ${actualFiles.length}`,
-        details: `Expected files: ${expectedFiles.join(', ')}\nActual files: ${actualFiles.join(', ')}`,
+        message: `Content mismatch in routes.conf`,
+        details: `Expected:\n${'─'.repeat(50)}\n${expectedContent}\n${'─'.repeat(50)}\n\nActual:\n${'─'.repeat(50)}\n${actualContent}\n${'─'.repeat(50)}`,
       };
-    }
-
-    // Check for missing files
-    const missingFiles = expectedFiles.filter(f => !actualFiles.includes(f));
-    if (missingFiles.length > 0) {
-      return {
-        passed: false,
-        message: `Missing generated files: ${missingFiles.join(', ')}`,
-      };
-    }
-
-    // Check for extra files
-    const extraFiles = actualFiles.filter(f => !expectedFiles.includes(f));
-    if (extraFiles.length > 0) {
-      return {
-        passed: false,
-        message: `Unexpected generated files: ${extraFiles.join(', ')}`,
-      };
-    }
-
-    // Compare file contents
-    for (const filename of expectedFiles) {
-      const expectedPath = join(expectedDir, filename);
-      const actualPath = join(actualDir, filename);
-
-      const expectedContent = await readFile(expectedPath, 'utf-8');
-      const actualContent = await readFile(actualPath, 'utf-8');
-
-      if (expectedContent !== actualContent) {
-        return {
-          passed: false,
-          message: `Content mismatch in ${filename}`,
-          details: `Expected:\n${'─'.repeat(50)}\n${expectedContent}\n${'─'.repeat(50)}\n\nActual:\n${'─'.repeat(50)}\n${actualContent}\n${'─'.repeat(50)}`,
-        };
-      }
     }
 
     return {
       passed: true,
-      message: `All ${expectedFiles.length} file(s) match expected output`,
+      message: `routes.conf matches expected output`,
     };
   } catch (error: any) {
     return {
@@ -132,12 +96,12 @@ async function compareOutputs(caseName: string): Promise<{ passed: boolean; mess
 
 async function cleanupOutputDir(caseName: string): Promise<void> {
   const caseDir = join(process.cwd(), 'test', caseName);
-  const outputDir = join(caseDir, 'nginx', 'conf.d');
+  const outputFile = join(caseDir, 'nginx', 'routes.conf');
 
   try {
-    await rm(outputDir, { recursive: true, force: true });
+    await rm(outputFile, { force: true });
   } catch (error) {
-    // Directory might not exist, that's ok
+    // File might not exist, that's ok
   }
 }
 

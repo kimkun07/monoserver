@@ -4,6 +4,97 @@
 
 이 문서는 Claude Code가 monoserver 프로젝트에서 효과적으로 작업하기 위한 가이드입니다.
 
+## 프로젝트 구조
+
+monoserver 프로젝트는 **여러 개의 독립적인 Task로 구성**되어 있습니다.
+
+### Task 기반 구조
+
+각 Task는:
+- **독립적인 목표**를 가지고 있음
+- **독립적인 devlog 파일**로 추적됨 (`.claude/devlog/[task-name].md`)
+- **독립적으로 완료** 가능
+- **의존성**이 있을 수 있음 (main.md의 Task 의존성 참조)
+
+### 현재 Task 목록
+
+```
+monoserver/
+├── nginx-config-generator/    # Task: Nginx 설정 파일 자동 생성
+├── scripts/                    # Task: 설치 및 유틸리티 스크립트
+│   └── install-docker-rootless.sh
+├── .github/workflows/          # Task: GitHub Actions 워크플로우
+│   └── deploy.yml
+├── nginx/                      # Nginx 설정 (자동 생성됨)
+├── compose.yaml                # Docker Compose 설정
+└── .claude/devlog/             # Task 진행 상황 추적
+    ├── main.md                     # 전체 프로젝트 진행 상황
+    ├── nginx-conf-generator.md     # Task: Nginx Config Generator
+    ├── docker-rootless.md          # Task: Docker Rootless 설치
+    ├── github-action.md            # Task: GitHub Actions
+    ├── google-compute-engine.md    # Task: GCE 서버 설정
+    └── install-guide.md            # Task: 설치 가이드 문서화
+```
+
+### Task 이름 규칙
+
+- **디렉토리/파일 기반**: `nginx-config-generator`, `docker-rootless`
+- **기능 기반**: `github-action`, `google-compute-engine`
+- **문서 기반**: `install-guide`
+
+## 커밋 메시지 형식
+
+monoserver 프로젝트는 **Task 기반 커밋 메시지 형식**을 사용합니다.
+
+### 형식
+
+```
+[task] 한글 설명
+```
+
+### 예시
+
+```bash
+[nginx-conf-generator] v2.5 nginx 서비스명 필수 검증 추가
+[github-action] deploy.yml 에러 처리 강화
+[docker-rootless] CAP_NET_BIND_SERVICE 설정 추가
+[install] 설치 가이드 초안 작성
+```
+
+### 규칙
+
+1. **Task 이름**: 대괄호 `[]` 안에 task 이름 작성 (영문, 소문자, 하이픈)
+2. **설명**: 한글로 명확하게 작성
+3. **간결함**: 한 줄로 요약 (상세 내용은 body에 작성)
+4. **접두사 금지**: `fix:`, `feat:`, `chore:` 등의 conventional commits 접두사 사용하지 않음
+   - ❌ `fix: [task] 버그 수정`
+   - ✅ `[task] 버그 수정`
+
+### 특수 케이스
+
+- **여러 Task 동시 수정**: 각 Task를 별도 대괄호로 명시
+  ```
+  [github-action] [devlog] deploy.yml 에러 처리 수정 및 devlog 업데이트
+  [nginx-conf-generator] [github-action] 설정 파일 생성 및 워크플로우 연동
+  ```
+
+- **프로젝트 전체 설정**: `[project]` 사용
+  ```
+  [project] .gitignore 업데이트
+  [project] README 초안 작성
+  ```
+
+- **Claude 관련 설정**: `[claude]` 사용
+  ```
+  [claude] CLAUDE.md 구조 설명 추가
+  [claude] devlog 시스템 개선
+  ```
+
+- **자동 생성 커밋**: 예외적으로 `chore:` 접두사 사용 (GitHub Actions 자동 커밋)
+  ```
+  chore: regenerate nginx configs
+  ```
+
 ## devlog 시스템
 
 monoserver 프로젝트는 **devlog 시스템**을 사용하여 개발 작업을 관리합니다.
@@ -153,6 +244,7 @@ Claude Code가 monoserver 프로젝트에서 기존 Task를 작업할 때 다음
 - [ ] 다음 Claude Code를 위한 조언 작성
 - [ ] main.md의 Task 상태 업데이트
 - [ ] main.md의 "최근 업데이트" 섹션에 항목 추가
+- [ ] **커밋 메시지 형식 확인**: `[task] 한글 설명` 형식 준수
 
 ---
 

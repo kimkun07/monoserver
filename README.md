@@ -74,6 +74,7 @@ ssh-keygen -t ed25519 -C "your.email@example.com" -f ~/.ssh/id_ed25519_github
 
 # Start ssh-agent in the background
 eval "$(ssh-agent -s)"
+# Expected output: Agent pid ...
 
 # Add SSH private key to ssh-agent
 ssh-add ~/.ssh/id_ed25519_github

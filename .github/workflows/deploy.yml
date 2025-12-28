@@ -84,6 +84,19 @@ jobs:
           # Wait a moment for containers to start
           sleep 3
 
+          # Verify port 80 binding (critical check for rootless docker)
+          echo "Verifying port 80 binding..."
+          if ! docker compose ps monoserver-nginx-main | grep -q "0.0.0.0:80"; then
+            echo "❌ Error: Port 80 binding failed"
+            echo "This usually means CAP_NET_BIND_SERVICE is not set on rootlesskit binary"
+            echo "Run: sudo setcap cap_net_bind_service=ep \$(which rootlesskit)"
+            echo ""
+            echo "Current container status:"
+            docker compose ps monoserver-nginx-main
+            exit 1
+          fi
+          echo "✅ Port 80 is successfully bound"
+
           # Reload Nginx to pick up config changes (zero-downtime)
           echo "Reloading Nginx configuration..."
           docker compose exec monoserver-nginx-main nginx -s reload || { echo "❌ Error: nginx reload failed"; exit 1; }

@@ -9,7 +9,7 @@ services:
 
   hello:
     image: hashicorp/http-echo
-    command: ["-text=Hello from http-echo container!"]
+    command: ["-text=Hello.2 from http-echo container!"]
     x-monoserver-default-port: "5678"
 
   whoami:

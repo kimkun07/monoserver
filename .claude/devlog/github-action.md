@@ -64,6 +64,46 @@ GitHub Repository Settings → Secrets and variables → Actions에 추가:
 
 ## 클로드 코드 일기
 
+### 2025-12-28 - workflow_dispatch 추가 및 수동 트리거 지원
+
+**상태**: ✅ 완료
+
+**진행 내용**:
+- GitHub Actions 워크플로우에 수동 트리거 기능 추가
+- `workflow_dispatch:` 이벤트 추가로 GitHub UI에서 직접 실행 가능
+- test-github-actions 브랜치 트리거 제거 (테스트 완료)
+
+**변경사항**:
+```yaml
+on:
+  push:
+    branches: [ main ]  # test-github-actions 제거
+    paths:
+      - 'compose.yaml'
+      - 'nginx/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:  # 추가: 수동 트리거 지원
+```
+
+**효과**:
+- GitHub Actions 페이지에서 "Run workflow" 버튼으로 수동 실행 가능
+- 디버깅 및 테스트가 더 편리해짐
+- 테스트 브랜치 불필요 (직접 실행 가능)
+
+**코드 변경**:
+- `.github/workflows/deploy.yml:3-10`: workflow_dispatch 추가, test-github-actions 제거
+
+**커밋**:
+- `[github-action] workflow_dispatch 추가 및 test 브랜치 트리거 제거`
+- `[claude] CLAUDE.md 커밋 메시지 형식 명확화` (함께 push됨)
+
+---
+
+> 다음 클로드 코드에게:
+> - **수동 실행**: GitHub Actions 페이지에서 "Run workflow" 버튼 사용 가능
+> - **테스트 브랜치 불필요**: 이제 직접 main에서 수동 실행으로 테스트 가능
+> - 배포 테스트가 필요하면 수동 트리거 사용하세요
+
 ### 2025-12-28 - deploy.yml 에러 처리 강화
 
 **상태**: ✅ 완료

@@ -89,6 +89,10 @@ install-guide.md (P1)
 ## 최근 업데이트
 
 ### 2025-12-28
+- ✅ **GitHub Actions workflow_dispatch 추가**
+  - 수동 트리거 지원: GitHub UI에서 "Run workflow" 버튼으로 실행 가능
+  - test-github-actions 브랜치 트리거 제거 (테스트 완료)
+  - 디버깅 및 테스트가 더 편리해짐
 - ✅ **nginx-config-generator v2.5 완성**
   - **v2.5**: nginx 서비스명 필수 검증 추가
     - compose.yaml에 monoserver-nginx-main 서비스가 반드시 존재해야 함

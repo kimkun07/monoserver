@@ -15,25 +15,9 @@ Declarative Docker container orchestration with automatic deployment via Git com
 - **Declarative configuration**: Services defined in standard `compose.yaml`
 - **Automatic reverse proxy**: Nginx configs generated from service definitions
 - **Path-based routing**: Access services via `/service/` paths (no DNS configuration needed)
-- **Zero-downtime updates**: Nginx reload without service interruption
 
 ## Architecture
-
-```
-GitHub Repository (compose.yaml)
-        ↓
-  [Git Push/Commit]
-        ↓
-  GitHub Actions Workflow
-        ↓
-  SSH to Compute Engine
-        ↓
-  Pull & Deploy Containers
-        ↓
-  Update Nginx Configs
-        ↓
-  Services Running with Proxy
-```
+![Image for architecture](images/architecture.png)
 
 ## Installation
 
@@ -401,54 +385,3 @@ docker compose logs -f
 # Stop services
 docker compose down
 ```
-
-## Troubleshooting
-
-### Docker permission denied
-If using rootless Docker, ensure:
-```bash
-export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock
-```
-
-### GitHub Actions fails to connect
-- Verify `SERVER_HOST` is the external IP, not internal
-- Check SSH key is correctly formatted (including `-----BEGIN` and `-----END` lines)
-- Ensure firewall allows SSH (port 22)
-
-### Services not accessible
-- Check Nginx is running: `docker compose ps monoserver-nginx-main`
-- Verify Nginx configs: `docker compose exec monoserver-nginx-main nginx -t`
-- Check routes.conf was generated: `cat nginx/routes.conf`
-- Test path-based routing: `curl http://YOUR_IP/hello/`
-
-### Port conflicts
-- Ensure only one service binds to port 80 (nginx-main)
-- Backend services should use internal ports only (no `ports:` mapping needed)
-
-## Security Considerations
-
-- **Rootless Docker**: Runs without root privileges, reducing attack surface
-- **Read-only configs**: Nginx configs mounted as `:ro` prevent tampering
-- **SSH key rotation**: Regularly rotate GitHub Actions SSH keys
-- **Firewall**: Configure UFW or Cloud Firewall to allow only ports 80, 443, 22
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Make your changes
-4. Run tests: `pnpm format:check && pnpm build`
-5. Commit: `git commit -m "feat: add my feature"`
-6. Push: `git push origin feature/my-feature`
-7. Create a Pull Request
-
-## License
-
-MIT License - See LICENSE file for details
-
-## Links
-
-- [Docker Rootless Mode Documentation](https://docs.docker.com/engine/security/rootless/)
-- [Docker Compose Documentation](https://docs.docker.com/compose/)
-- [Nginx Proxy Configuration](https://nginx.org/en/docs/http/ngx_http_proxy_module.html)
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)

@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir, rm, access } from 'fs/promises';
+import { readFile, writeFile, mkdir, access } from 'fs/promises';
 import { join, dirname } from 'path';
 import { constants } from 'fs';
 import yaml from 'js-yaml';
@@ -137,13 +137,12 @@ async function generateNginxConfigs(): Promise<void> {
     console.log('Ensuring output directory exists...');
     await mkdir(options.outputDir, { recursive: true });
 
-    // Remove old routes.conf if it exists
+    // Prepare output file path
+    // IMPORTANT: Do NOT delete the file before writing!
+    // Deleting creates a new inode, which breaks Docker bind mounts.
+    // The container would still see the old (deleted) file until restart.
+    // Simply overwriting preserves the inode and updates the content immediately.
     const confFilePath = join(options.outputDir, 'routes.conf');
-    try {
-      await rm(confFilePath, { force: true });
-    } catch (error) {
-      // File might not exist, that's ok
-    }
 
     // Generate location blocks for each service
     console.log(`\nNow generating config file...`);
@@ -217,6 +216,12 @@ function generateServerConfig(locationBlocks: string[]): string {
 server {
 ${listenDirectives}
   server_name  _;  # Accept all hostnames/IPs
+
+  # Default location - serve nginx welcome page
+  location / {
+    root   /usr/share/nginx/html;
+    index  index.html index.htm;
+  }
 
 ${locationBlocks.join('\n\n')}
 }

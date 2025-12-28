@@ -198,6 +198,7 @@ if [ -n "$ROOTLESSKIT_PATH" ]; then
     #   - e (Effective): activated immediately when process runs
     #   - p (Permitted): process can use this permission
     setcap cap_net_bind_service=ep "$ROOTLESSKIT_PATH"
+    su - "$USERNAME" -c "export XDG_RUNTIME_DIR=/run/user/$USERID; systemctl --user restart docker"
 
     # Verify configuration
     log_info "CAP_NET_BIND_SERVICE configured successfully"

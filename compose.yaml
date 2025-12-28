@@ -15,8 +15,3 @@ services:
   whoami:
     image: traefik/whoami
     x-monoserver-default-port: "80"
-
-  echotest:
-    image: hashicorp/http-echo
-    command: ["-text=Test service for GitHub Actions auto-commit"]
-    x-monoserver-default-port: "5678"

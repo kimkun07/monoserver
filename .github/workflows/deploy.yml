@@ -73,6 +73,8 @@ jobs:
         host: ${{ secrets.GCE_HOST }}
         username: ${{ secrets.GCE_USER }}
         key: ${{ secrets.GCE_SSH_KEY }}
+        timeout: 30s
+        command_timeout: 30m
         # protocol: tcp6  # IPv6 support disabled, using default IPv4 (tcp)
 
         script: |
@@ -87,6 +89,9 @@ jobs:
           # Pull latest changes
           echo "Pulling latest changes from main branch..."
           git pull origin main || { echo "❌ Error: git pull failed"; exit 1; }
+
+          echo "Pulling latest Docker images..."
+          docker compose pull || { echo "❌ Error: docker compose pull failed"; exit 1; }
 
           # Update Docker containers (only changed services will restart)
           echo "Updating Docker containers..."

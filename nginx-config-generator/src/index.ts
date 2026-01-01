@@ -198,14 +198,17 @@ function generateLocationBlock(serviceName: string, serviceConfig: ComposeServic
   const upstreamVar = `upstream_${serviceName.replace(/-/g, '_')}`;
 
   // Path-based routing: /servicename/ -> http://servicename:port/
-  // The trailing slash in proxy_pass is critical: it removes the /servicename prefix
-  // Example: /hello/abc -> http://hello:5678/abc (not /hello/abc)
+  // When using variables in proxy_pass, URI rewriting doesn't happen automatically
+  // We need to use rewrite to manually strip the prefix
+  // Example: /hello/abc -> rewrite -> /abc -> http://hello:5678/abc
   return `  # Route for service: ${serviceName}
   location /${serviceName}/ {
     # Using a variable forces nginx to resolve DNS at request time
     # This prevents startup failures when upstream containers aren't ready yet
     set $${upstreamVar} ${serviceName};
-    proxy_pass http://$${upstreamVar}:${port}/;
+    # Strip the /${serviceName}/ prefix from the request
+    rewrite ^/${serviceName}/(.*)$ /$1 break;
+    proxy_pass http://$${upstreamVar}:${port};
   }`;
 }
 

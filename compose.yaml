@@ -21,3 +21,37 @@ services:
   whoami:
     image: traefik/whoami
     x-monoserver-default-port: "80"
+
+  happy-server:
+    image: kimkun07/happy-server-selfhost:latest
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/happy-server"
+      REDIS_URL: "redis://redis:6379"
+      SEED: "your-seed-for-token-generation"
+      PORT: "3005"
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    x-monoserver-default-port: "3000"
+  
+  happy-postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: happy-server
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  happy-redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:

@@ -28,6 +28,7 @@ services:
       NODE_ENV: production
       DATABASE_URL: "postgresql://postgres:postgres@happy-postgres:5432/happy-server"
       REDIS_URL: "redis://happy-redis:6379"
+      S3_HOST: localhost
       SEED: "your-seed-for-token-generation"
       PORT: "3005"
     depends_on:

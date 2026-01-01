@@ -3,6 +3,21 @@
 
 # monoserver
 
+## TODO
+
+### deploy.yml IPv4로 변경
+현재 `.github/workflows/deploy.yml`이 IPv6로 접속하도록 설정되어 있습니다. 나중에 다음 작업을 수행해야 합니다:
+
+1. **deploy.yml을 IPv4 기반으로 변경**
+   - `protocol: tcp6` → `protocol: tcp` 또는 제거
+   - WARP on Actions 관련 설정 제거 또는 주석처리
+
+2. **IPv6 설정은 주석처리로 보존**
+   - 완전히 삭제하지 말고 주석으로 남겨두기
+   - 나중에 필요할 때 다시 활성화할 수 있도록
+
+---
+
 Declarative Docker container orchestration with automatic deployment via Git commits. Simply update `compose.yaml` in GitHub, commit, and your services automatically deploy to your server with Nginx reverse proxy configured.
 
 ## Overview

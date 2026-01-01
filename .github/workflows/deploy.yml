@@ -55,15 +55,16 @@ jobs:
         Co-Authored-By: Claude <noreply@anthropic.com>
         Co-Authored-By: Happy <yesreply@happy.engineering>"
         git push
-    
-    - name: Set up WARP
-      uses: fscarmen/warp-on-actions@v1.1
-      with:
-        stack: dual
 
-    - name: testing ipv6 for command
-      run: |
-        curl -m 9 --ipv6 --verbose https://google.com
+    # IPv6 support (currently disabled, using IPv4 only)
+    # - name: Set up WARP
+    #   uses: fscarmen/warp-on-actions@v1.1
+    #   with:
+    #     stack: dual
+
+    # - name: testing ipv6 for command
+    #   run: |
+    #     curl -m 9 --ipv6 --verbose https://google.com
 
     - name: Deploy to Google Compute Engine
       if: github.ref == 'refs/heads/main'
@@ -72,8 +73,8 @@ jobs:
         host: ${{ secrets.GCE_HOST }}
         username: ${{ secrets.GCE_USER }}
         key: ${{ secrets.GCE_SSH_KEY }}
-        protocol: tcp6
-        
+        # protocol: tcp6  # IPv6 support disabled, using default IPv4 (tcp)
+
         script: |
           set -e  # Exit immediately if a command exits with a non-zero status
           set -u  # Treat unset variables as an error

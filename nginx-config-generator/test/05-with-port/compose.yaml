@@ -4,4 +4,4 @@ services:
 
   hello:
     image: hello-world
-    x-monoserver-listen-ports: [80, 443]
+    x-monoserver-port: "3000"

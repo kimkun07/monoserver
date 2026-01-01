@@ -16,11 +16,11 @@ services:
   hello:
     image: hashicorp/http-echo
     command: ["-text=Hello from http-echo container!"]
-    x-monoserver-default-port: "5678"
+    x-monoserver-port: "5678"
 
   whoami:
     image: traefik/whoami
-    x-monoserver-default-port: "80"
+    x-monoserver-port: "80"
 
   happy-server:
     image: kimkun07/happy-server-selfhost:latest
@@ -42,7 +42,7 @@ services:
       - happy-redis
       - happy-minio
     restart: unless-stopped
-    x-monoserver-default-port: "3000"
+    x-monoserver-port: "3000"
 
   happy-minio:
     image: minio/minio:latest
@@ -53,7 +53,6 @@ services:
     volumes:
       - minio-data:/data
     restart: unless-stopped
-    x-monoserver-default-port: "9000"
   
   happy-postgres:
     image: postgres:17

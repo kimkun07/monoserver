@@ -4,4 +4,4 @@ services:
 
   hello:
     image: hello-world
-    x-monoserver-default-port: "5678"
+    x-monoserver-port: "5678"

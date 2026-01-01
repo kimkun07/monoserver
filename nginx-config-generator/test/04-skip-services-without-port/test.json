@@ -1,5 +1,5 @@
 {
-  "description": "Should use $server_port when x-monoserver-default-port is not specified",
+  "description": "Should skip services without x-monoserver-port",
   "shouldFail": false,
   "params": {
     "composePath": "./compose.yaml",

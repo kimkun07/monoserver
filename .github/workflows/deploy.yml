@@ -63,6 +63,7 @@ jobs:
         host: ${{ secrets.GCE_HOST }}
         username: ${{ secrets.GCE_USER }}
         key: ${{ secrets.GCE_SSH_KEY }}
+        protocol: tcp6
         script_stop: true
         script: |
           set -e  # Exit immediately if a command exits with a non-zero status

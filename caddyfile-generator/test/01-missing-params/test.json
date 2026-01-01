@@ -1,0 +1,8 @@
+{
+  "description": "Should fail when required parameters are missing",
+  "shouldFail": true,
+  "expectedError": "Missing required parameters",
+  "params": {
+    "outputDir": "."
+  }
+}

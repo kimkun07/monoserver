@@ -1,0 +1,20 @@
+services:
+  # Service with x-caddy-port - should be exposed
+  hello:
+    image: hashicorp/http-echo
+    x-caddy-port: "5678"
+
+  # Service with x-caddy-port - should be exposed
+  whoami:
+    image: traefik/whoami
+    x-caddy-port: "80"
+
+  # Services without x-caddy-port - should be skipped
+  postgres:
+    image: postgres:17
+
+  redis:
+    image: redis:7-alpine
+
+  minio:
+    image: minio/minio:latest

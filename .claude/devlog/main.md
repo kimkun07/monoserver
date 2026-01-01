@@ -15,11 +15,12 @@
 
 | Task | 상태 | 우선순위 | 파일 |
 |------|------|---------|------|
-| Nginx Config Generator | ✅ 완료 (v3.3) | P0 | `nginx-conf-generator.md` |
+| Nginx Config Generator | ✅ 완료 (v3.3) → 🔄 Deprecated | P0 | `nginx-conf-generator.md` |
+| **Caddy Migration** | ✅ 완료 | P0 | `caddy-migration.md` |
 | Docker Rootless 설정 | ✅ 완료 | P0 | `docker-rootless.md` |
 | GitHub Actions 워크플로우 | ✅ 완료 | P0 | `github-action.md` |
 | Google Compute Engine 설정 | ✅ 완료 | P0 | `google-compute-engine.md` |
-| 설치 가이드 (README.md) | ✅ 완료 | P0 | README.md |
+| 설치 가이드 (README.md) | ✅ 완료 → 🔄 업데이트 필요 | P0 | README.md |
 
 ### 상태 범례
 - 🔴 차단됨 (Blocked)
@@ -83,6 +84,28 @@ Phase 1 완료! 🎉
 - ✅ Docker bind mount 최적화
 
 ## 최근 업데이트
+
+### 2026-01-01
+- 🎉 **Nginx → Caddy 마이그레이션 완료!**
+  - nginx-config-generator → caddyfile-generator로 완전 전환
+  - **Path-based routing → Subdomain-based routing**
+    - 이전: `http://YOUR_IP/hello/` → `/hello/api`
+    - 이후: `http://hello.localhost` → `/api`
+  - HTTPS 자동 설정 준비 (Caddy의 Let's Encrypt 자동 지원)
+  - 모든 테스트 통과 (5/5 tests passed)
+  - deploy.yml 완전 재작성 (caddy validate, caddy reload)
+  - nginx 폴더 완전 제거
+  - 브랜치: nginx-to-caddy
+- ✅ **caddyfile-generator 구현**
+  - x-caddy-port 필드 사용
+  - Subdomain-based routing: `servicename.localhost`
+  - 기본 localhost 응답: "Hello, Caddy!"
+  - 단일 Caddyfile 생성 (nginx.conf + routes.conf 통합)
+  - 서비스명 강제 제거 (x-caddy-port로만 판단)
+- 🔄 **Breaking Changes**
+  - URL 구조 완전 변경 (path → subdomain)
+  - nginx 설정 파일 제거
+  - README.md 업데이트 필요
 
 ### 2025-12-28
 - 🎉 **Phase 1 완료!**

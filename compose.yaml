@@ -1,26 +1,23 @@
 services:
-  monoserver-nginx-main: # [monoserver] Should not change name `monoserver-nginx-main`
-    image: nginx:1.27.3
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
     ports:
-    - "80:80"
+      - "80:80"
+      - "443:443"
     volumes:
-    - type: bind
-      source: ./nginx/nginx.conf
-      target: /etc/nginx/nginx.conf
-      read_only: true
-    - type: bind
-      source: ./nginx/routes.conf
-      target: /etc/nginx/routes.conf
-      read_only: true
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
 
   hello:
     image: hashicorp/http-echo
     command: ["-text=Hello from http-echo container!"]
-    x-monoserver-port: "5678"
+    x-caddy-port: "5678"
 
   whoami:
     image: traefik/whoami
-    x-monoserver-port: "80"
+    x-caddy-port: "80"
 
   happy-server:
     image: kimkun07/happy-server-selfhost:0.2.0

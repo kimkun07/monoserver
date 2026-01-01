@@ -1,8 +1,0 @@
-{
-  "description": "Should use specified port when x-monoserver-default-port is provided",
-  "shouldFail": false,
-  "params": {
-    "composePath": "./compose.yaml",
-    "outputDir": "./nginx"
-  }
-}

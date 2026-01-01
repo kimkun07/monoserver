@@ -1,0 +1,8 @@
+{
+  "description": "Should skip services without x-caddy-port",
+  "shouldFail": false,
+  "params": {
+    "composePath": "./compose.yaml",
+    "outputDir": "."
+  }
+}

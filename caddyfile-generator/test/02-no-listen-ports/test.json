@@ -1,0 +1,8 @@
+{
+  "description": "Should generate subdomain-based routing config with single service",
+  "shouldFail": false,
+  "params": {
+    "composePath": "./compose.yaml",
+    "outputDir": "."
+  }
+}

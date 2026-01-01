@@ -1,8 +1,0 @@
-{
-  "description": "Should only generate routes for services with x-monoserver-port",
-  "shouldFail": false,
-  "params": {
-    "composePath": "./compose.yaml",
-    "outputDir": "./nginx"
-  }
-}

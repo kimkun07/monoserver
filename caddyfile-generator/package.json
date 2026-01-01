@@ -1,0 +1,29 @@
+{
+  "name": "caddyfile-generator",
+  "version": "1.0.0",
+  "description": "Generates Caddyfile reverse proxy configurations from compose.yaml",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "generate": "tsx src/index.ts --compose-path ../compose.yaml --output-dir ..",
+    "test": "tsx src/test-runner.ts",
+    "test:clean": "rm -f test/*/expected/Caddyfile test/*/Caddyfile"
+  },
+  "keywords": [
+    "caddy",
+    "docker-compose",
+    "reverse-proxy"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.10.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}

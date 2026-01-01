@@ -1,0 +1,10 @@
+services:
+  # Services without x-caddy-port should be skipped
+  postgres:
+    image: postgres:17
+
+  redis:
+    image: redis:7-alpine
+
+  minio:
+    image: minio/minio:latest

@@ -55,6 +55,15 @@ jobs:
         Co-Authored-By: Claude <noreply@anthropic.com>
         Co-Authored-By: Happy <yesreply@happy.engineering>"
         git push
+    
+    - name: Set up WARP
+      uses: fscarmen/warp-on-actions@v1.1
+      with:
+        stack: dual
+
+    - name: testing ipv6 for command
+      run: |
+        curl -m 9 --ipv6 --verbose https://google.com
 
     - name: Deploy to Google Compute Engine
       if: github.ref == 'refs/heads/main'

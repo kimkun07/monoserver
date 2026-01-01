@@ -23,7 +23,7 @@ services:
     x-monoserver-port: "80"
 
   happy-server:
-    image: kimkun07/happy-server-selfhost:latest
+    image: kimkun07/happy-server-selfhost:0.1.0
     ports:
       - "3000:3000"
     restart: unless-stopped
@@ -49,15 +49,13 @@ services:
         condition: service_completed_successfully
 
   migrate:
-    image: kimkun07/happy-server-selfhost:latest
+    image: kimkun07/happy-server-selfhost:0.1.0
     command: yarn prisma migrate deploy
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/happy-server
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - ./prisma:/app/prisma
  
   postgres:
     image: postgres:15

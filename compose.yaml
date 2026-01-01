@@ -26,13 +26,13 @@ services:
     image: kimkun07/happy-server-selfhost:latest
     environment:
       NODE_ENV: production
-      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/happy-server"
-      REDIS_URL: "redis://redis:6379"
+      DATABASE_URL: "postgresql://postgres:postgres@happy-postgres:5432/happy-server"
+      REDIS_URL: "redis://happy-redis:6379"
       SEED: "your-seed-for-token-generation"
       PORT: "3005"
     depends_on:
-      - postgres
-      - redis
+      - happy-postgres
+      - happy-redis
     restart: unless-stopped
     x-monoserver-default-port: "3000"
   

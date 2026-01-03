@@ -4,5 +4,5 @@ node_modules
 # Build output
 dist
 
-# Test output (generated during test runs)
-test/*/nginx/conf.d
+# Test outputs (actual generated files, not expected results)
+test/*/Caddyfile

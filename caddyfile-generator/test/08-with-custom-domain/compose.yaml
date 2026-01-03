@@ -1,0 +1,8 @@
+services:
+  hello:
+    image: tutum/hello-world
+    x-caddy-port: 3000
+
+  api:
+    image: api-service
+    x-caddy-port: 8080

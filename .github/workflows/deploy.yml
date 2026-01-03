@@ -33,7 +33,15 @@ jobs:
 
     - name: Generate Caddyfile
       working-directory: ./caddyfile-generator
-      run: npm run generate
+      env:
+        DOMAIN: ${{ secrets.GCE_HOST }}
+      run: |
+        if [ -z "$DOMAIN" ]; then
+          echo "⚠️  Warning: GCE_HOST secret not set, using localhost"
+          npm run generate
+        else
+          npm run generate -- --domain "$DOMAIN"
+        fi
 
     - name: Check for changes
       id: check_changes

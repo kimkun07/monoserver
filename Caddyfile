@@ -2,14 +2,14 @@
 # DO NOT EDIT MANUALLY - changes will be overwritten
 # Subdomain-based routing for services
 
-localhost {
+example.com {
 	respond "Hello, Caddy!"
 }
 
-hello.localhost {
+hello.example.com {
 	reverse_proxy hello:5678
 }
 
-whoami.localhost {
+whoami.example.com {
 	reverse_proxy whoami:80
 }

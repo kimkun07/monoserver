@@ -16,7 +16,7 @@
 - **Automatic HTTPS**: Caddy automatically obtains and renews Let's Encrypt SSL certificates
 
 ## Architecture
-![Image for architecture](images/architecture.png)
+![Image for architecture](images/architecture-caddy.png)
 
 ### How Subdomain Routing Works
 

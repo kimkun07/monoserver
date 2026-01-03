@@ -170,8 +170,11 @@ docker compose version
 
 Generate a dedicated SSH key for GitHub Actions to use:
 
+> [!NOTE]
+> Path `~/.ssh/github_actions` will be used in workflow. Do not change it.
+
 ```bash
-# Generate SSH key for GitHub Actions
+# Generate SSH key for GitHub Actions.
 ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_actions
 # Press Enter for all prompts (no passphrase)
 

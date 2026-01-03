@@ -98,6 +98,9 @@ jobs:
           cd "$REPO_NAME" || { echo "❌ Error: $REPO_NAME directory not found"; exit 1; }
 
           # Pull latest changes
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_ed25519_github
+          
           echo "Pulling latest changes from main branch..."
           git pull origin main || { echo "❌ Error: git pull failed"; exit 1; }
 

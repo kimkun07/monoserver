@@ -20,25 +20,24 @@ monoserver 프로젝트는 **여러 개의 독립적인 Task로 구성**되어 �
 
 ```
 monoserver/
-├── nginx-config-generator/    # Task: Nginx 설정 파일 자동 생성
+├── caddyfile-generator/        # Task: Caddyfile 자동 생성 (subdomain routing)
 ├── scripts/                    # Task: 설치 및 유틸리티 스크립트
 │   └── install-docker-rootless.sh
 ├── .github/workflows/          # Task: GitHub Actions 워크플로우
 │   └── deploy.yml
-├── nginx/                      # Nginx 설정 (자동 생성됨)
+├── Caddyfile                    # Caddy 설정 (자동 생성됨)
 ├── compose.yaml                # Docker Compose 설정
 └── .claude/devlog/             # Task 진행 상황 추적
     ├── main.md                     # 전체 프로젝트 진행 상황
-    ├── nginx-conf-generator.md     # Task: Nginx Config Generator
+    ├── caddyfile-generator.md      # Task: Caddyfile Generator
     ├── docker-rootless.md          # Task: Docker Rootless 설치
     ├── github-action.md            # Task: GitHub Actions
-    ├── google-compute-engine.md    # Task: GCE 서버 설정
-    └── install-guide.md            # Task: 설치 가이드 문서화
+    └── google-compute-engine.md    # Task: GCE 서버 설정
 ```
 
 ### Task 이름 규칙
 
-- **디렉토리/파일 기반**: `nginx-config-generator`, `docker-rootless`
+- **디렉토리/파일 기반**: `caddyfile-generator`, `docker-rootless`
 - **기능 기반**: `github-action`, `google-compute-engine`
 - **문서 기반**: `install-guide`
 
@@ -55,10 +54,10 @@ monoserver 프로젝트는 **Task 기반 커밋 메시지 형식**을 사용합�
 ### 예시
 
 ```bash
-[nginx-conf-generator] v2.5 nginx 서비스명 필수 검증 추가
-[github-action] deploy.yml 에러 처리 강화
+[caddyfile-generator] domain 파라미터 추가 및 테스트 작성
+[github-action] deploy.yml에서 GCE_HOST secret 연동
 [docker-rootless] CAP_NET_BIND_SERVICE 설정 추가
-[install] 설치 가이드 초안 작성
+[project] README 업데이트 (Caddy, HTTPS, subdomain routing)
 ```
 
 ### 규칙
@@ -75,13 +74,13 @@ monoserver 프로젝트는 **Task 기반 커밋 메시지 형식**을 사용합�
 - **여러 Task 동시 수정**: 각 Task를 별도 대괄호로 명시
   ```
   [github-action] [devlog] deploy.yml 에러 처리 수정 및 devlog 업데이트
-  [nginx-conf-generator] [github-action] 설정 파일 생성 및 워크플로우 연동
+  [caddyfile-generator] [github-action] 설정 파일 생성 및 워크플로우 연동
   ```
 
 - **프로젝트 전체 설정**: `[project]` 사용
   ```
   [project] .gitignore 업데이트
-  [project] README 초안 작성
+  [project] README 업데이트 (Caddy, HTTPS, subdomain routing)
   ```
 
 - **Claude 관련 설정**: `[claude]` 사용
@@ -92,7 +91,7 @@ monoserver 프로젝트는 **Task 기반 커밋 메시지 형식**을 사용합�
 
 - **자동 생성 커밋**: 예외적으로 `chore:` 접두사 사용 (GitHub Actions 자동 커밋)
   ```
-  chore: regenerate nginx configs
+  chore: regenerate Caddyfile
   ```
 
 ## devlog 시스템
@@ -185,33 +184,37 @@ Claude Code가 monoserver 프로젝트에서 기존 Task를 작업할 때 다음
 
 **좋은 일기 예시**:
 ```markdown
-### 2025-12-26 - Nginx Config Generator 구현
+### 2026-01-03 - Caddyfile Generator domain 파라미터 추가
 
-**상태**: 🟡 준비중 → 🟢 진행중
+**상태**: 🟡 준비중 → 🟢 진행중 → ✅ 완료
 
 **진행 내용**:
-- scripts/generate-nginx-configs.ts 파일 생성
-- js-yaml 라이브러리로 compose.yaml 파싱 성공
-- hello 서비스에 대한 .conf 파일 생성 테스트 성공
+- caddyfile-generator에 --domain 파라미터 추가
+- localhost 대신 사용자 도메인으로 Caddyfile 생성 가능
+- subdomain routing 지원 (hello.example.com)
+- 테스트 케이스 작성 (08-with-custom-domain)
+- 모든 테스트 통과 (6/6)
 
 **다음 단계**:
-1. 모든 서비스에 대해 반복 로직 작성
-2. pnpm 스크립트에 추가
+1. README 업데이트 (Caddy, HTTPS, subdomain routing)
+2. CLAUDE.md 업데이트
 
 **고려사항**:
-- 포트 번호는 수동으로 지정하는 게 더 명확함
+- domain은 optional이며 기본값은 localhost
+- GCE_HOST secret에 실제 도메인 사용
 
 **블로커**: 없음
 
 **테스트 결과**:
-- ✅ compose.yaml 파싱 성공
-- ✅ hello.conf 생성 성공
+- ✅ domain 파라미터 추가 성공
+- ✅ subdomain routing 생성 확인
+- ✅ 모든 테스트 통과
 
 ---
 
 > 다음 클로드 코드에게:
-> - fs/promises를 사용해서 비동기로 파일 쓰기 하세요
-> - 에러 처리를 철저히 하세요
+> - Caddy가 자동으로 Let's Encrypt SSL 인증서를 발급합니다
+> - 도메인이 필수이며, localhost는 HTTPS를 지원하지 않습니다
 ```
 
 **나쁜 일기 예시** (피해야 함):
@@ -228,12 +231,20 @@ Claude Code가 monoserver 프로젝트에서 기존 Task를 작업할 때 다음
 > - 열심히 하세요
 ```
 
-## 작업 우선순위
+## 주요 기술 스택
 
-1. **P0**: `nginx-conf-generator.md` - 최우선
-2. **P0**: `github-action.md` - nginx-conf-generator 완성 후
-3. **P0**: `google-compute-engine.md` - 실제 배포 환경 설정
-4. **P1**: `install-guide.md` - 위 3개 완료 후 문서화
+- **Reverse Proxy**: Caddy (자동 HTTPS, subdomain routing)
+- **Container Orchestration**: Docker Compose
+- **CI/CD**: GitHub Actions
+- **SSL Certificates**: Let's Encrypt (Caddy 자동 관리)
+- **Routing**: Subdomain-based (`hello.yourdomain.com`)
+
+## 핵심 개념
+
+- **x-caddy-port**: compose.yaml에서 서비스 포트를 지정하는 custom field
+- **Caddyfile**: Caddy 설정 파일 (caddyfile-generator가 자동 생성)
+- **Subdomain Routing**: 각 서비스가 별도의 subdomain을 가짐
+- **자동 HTTPS**: Caddy가 Let's Encrypt로 자동으로 인증서 발급 및 갱신
 
 ## 마무리 체크리스트
 

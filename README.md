@@ -3,56 +3,70 @@
 
 # monoserver
 
-## TODO
-
-### deploy.yml IPv4로 변경
-현재 `.github/workflows/deploy.yml`이 IPv6로 접속하도록 설정되어 있습니다. 나중에 다음 작업을 수행해야 합니다:
-
-1. **deploy.yml을 IPv4 기반으로 변경**
-   - `protocol: tcp6` → `protocol: tcp` 또는 제거
-   - WARP on Actions 관련 설정 제거 또는 주석처리
-
-2. **IPv6 설정은 주석처리로 보존**
-   - 완전히 삭제하지 말고 주석으로 남겨두기
-   - 나중에 필요할 때 다시 활성화할 수 있도록
-
----
-
-Declarative Docker container orchestration with automatic deployment via Git commits. Simply update `compose.yaml` in GitHub, commit, and your services automatically deploy to your server with Nginx reverse proxy configured.
-
 ## Overview
 
-**monoserver** automates the deployment of Docker containers with path-based routing. Define your services in `compose.yaml`, push to GitHub, and let GitHub Actions handle the rest.
+**monoserver** automates the deployment of Docker containers with subdomain-based routing and automatic HTTPS certificates. Simply update `compose.yaml`, push to GitHub, and let GitHub Actions handle deployment, SSL certificates, and reverse proxy configuration.
 
 ### Key Features
 
-- **Git-based deployment**: Push to GitHub triggers automatic container updates
+- **Git-based deployment**: Push to GitHub triggers automatic updates
+- **Subdomain routing**: Each service gets its own subdomain (e.g., `hello.yourdomain.com`)
+   - **Domain required**: You need a domain name pointed to your server
 - **Declarative configuration**: Services defined in standard `compose.yaml`
-- **Automatic reverse proxy**: Nginx configs generated from service definitions
-- **Path-based routing**: Access services via `/service/` paths (no DNS configuration needed)
+- **Automatic HTTPS**: Caddy automatically obtains and renews Let's Encrypt SSL certificates
 
 ## Architecture
 ![Image for architecture](images/architecture.png)
+
+### How Subdomain Routing Works
+
+- **Domain**: `example.com` → Caddy welcome page
+- **Service hello**: `hello.example.com` → `hello` container
+- **Service whoami**: `whoami.example.com` → `whoami` container
+
+Each service in `compose.yaml` with `x-caddy-port` gets its own subdomain automatically.
 
 ## Installation
 
 ### Prerequisites
 
-- Google Compute Engine instance (or any Linux server with SSH access)
+- **Domain name** (required): You must own a domain and point it to your server's IP address
+- Linux server with SSH access (e.g., Google Compute Engine, AWS EC2, etc.)
 - GitHub account
-- No domain or DNS configuration needed (uses path-based routing)
 
-### Step 1: Use Template Repository
+### Step 1: Domain Setup
+
+**Before starting, configure your domain's DNS:**
+
+1. Go to your domain registrar's DNS settings
+2. Add an A record pointing to your server's IP:
+   - Type: `A`
+   - Name: `@` (or leave blank for root domain)
+   - Value: `YOUR_SERVER_IP`
+   - TTL: `Auto` or `3600`
+3. Add a wildcard A record for subdomains:
+   - Type: `A`
+   - Name: `*`
+   - Value: `YOUR_SERVER_IP`
+   - TTL: `Auto` or `3600`
+
+**Verify DNS propagation:**
+```bash
+# Check if domain resolves to your server IP
+ping yourdomain.com
+```
+
+### Step 2: Use Template Repository
 
 1. Go to the monoserver repository on GitHub
 2. Click "Use this template" → "Create a new repository"
-3. Choose a name for your repository (e.g., "my-monoserver")
-4. Click "Create repository"
-5. Clone your new repository locally (optional for testing)
+3. Choose a name for your repository (e.g., "my-monoserver-private")
+4. **Important**: Make it **Private** to protect your domain from being exposed
+5. Clone your new repository locally
 
-### Step 2: Server Setup (Compute Engine)
+### Step 3: Server Setup
 
-Follow these steps **on your GCE instance** after SSH-ing in.
+SSH into your server and follow these steps.
 
 #### 1. Install Git
 
@@ -168,219 +182,231 @@ cat ~/.ssh/github_actions.pub >> ~/.ssh/authorized_keys
 cat ~/.ssh/github_actions
 ```
 
-**Copy the entire private key output** (including `-----BEGIN` and `-----END` lines).
+Copy the entire private key output (including `-----BEGIN` and `-----END` lines).
 
-### Step 3: Configure GitHub Repository Settings
+### Step 4: Configure GitHub Repository Secrets
 
-#### Add GitHub Secrets
+Add these secrets to your repository:
 
 1. Go to your repository on GitHub
-2. Navigate to **Settings** → **Secrets and variables** → **Actions**
-3. Click **New repository secret** for each of the following:
+2. Settings → Secrets and variables → Actions
+3. Click "New repository secret" for each:
 
-| Secret Name | Value | How to get |
-|------------|-------|------------|
-| `GCE_HOST` | Your Compute Engine external IP | Check GCE console or run `curl ifconfig.me` on the instance |
-| `GCE_USER` | Your server username | Usually your GCP username, check with `whoami` on the instance |
-| `GCE_SSH_KEY` | Private key for GitHub Actions | Output from `cat ~/.ssh/github_actions` (see Step 2.5) |
+| Secret Name | Value | Example |
+|------------|-------|---------|
+| `GCE_HOST` | **Your domain name** | `yourdomain.com` or `example.com` |
+| `GCE_USER` | Your server username | Run `whoami` on the server |
+| `GCE_SSH_KEY` | Private key for GitHub Actions | Output from `cat ~/.ssh/github_actions` |
 
-**Important:** Make sure to copy the **entire** private key including the `-----BEGIN OPENSSH PRIVATE KEY-----` and `-----END OPENSSH PRIVATE KEY-----` lines.
+**⚠️ Important**: `GCE_HOST` must be your domain name, not an IP address.
 
-### Step 4: Deploy and Test
+### Step 5: Initial Deployment
 
-#### 4.1. Trigger Initial Deployment
-
-Manually trigger the GitHub Actions workflow to deploy your containers:
+#### Trigger GitHub Actions Workflow
 
 1. Go to your repository on GitHub
 2. Click the **Actions** tab
-3. Click on **"Deploy to Google Compute Engine"** workflow (left sidebar)
-4. Click the **"Run workflow"** button (right side)
-5. Select the `main` branch
-6. Click **"Run workflow"** to start deployment
+3. Click "Deploy to Server" workflow (left sidebar)
+4. Click "Run workflow" button (right side)
+5. Select `main` branch
+6. Click "Run workflow"
 
-#### 4.2. Monitor Deployment
+#### What Happens During Deployment
 
-Watch the workflow execution:
-
-1. The workflow run will appear in the list
-2. Click on it to see detailed logs
-3. Wait for all steps to complete (usually takes 30-60 seconds)
-
-**What the workflow does:**
-1. ✅ Generates nginx routes config from `compose.yaml`
-2. ✅ Commits changes to `nginx/routes.conf` (if any)
-3. ✅ SSHs into your GCE instance
+1. ✅ Generates `Caddyfile` with subdomain routes from `compose.yaml`
+2. ✅ Commits `Caddyfile` back to repository (if changed)
+3. ✅ SSHs into your server
 4. ✅ Pulls latest code
-5. ✅ Runs `docker compose up -d` (starts all containers)
-6. ✅ Reloads nginx configuration
+5. ✅ Runs `docker compose up -d` (starts/updates containers)
+6. ✅ Validates and reloads Caddy configuration
+7. ✅ Caddy automatically obtains Let's Encrypt SSL certificates
 
-#### 4.3. Access Your Services
+**First deployment takes a few minutes** as Caddy requests SSL certificates from Let's Encrypt.
 
-Once deployment completes, access your services using the **server's IP address**:
+#### Verify Deployment
 
-**Get your server IP:**
+Check if services are running:
 ```bash
-# On your GCE instance
-curl ifconfig.me
+# On your server
+docker compose ps
+
+# Check Caddy logs
+docker compose logs caddy
 ```
 
-**Access via browser:**
-- `http://YOUR_IP/` → Nginx welcome page
-- `http://YOUR_IP/hello/` → Hello service
-- `http://YOUR_IP/whoami/` → Whoami service
+### Step 6: Access Your Services
 
-**Test from command line:**
+Once deployment completes, access your services via HTTPS:
+
+**Browser access:**
+- `https://yourdomain.com` → Caddy welcome page
+- `https://hello.yourdomain.com` → Hello service
+- `https://whoami.yourdomain.com` → Whoami service
+
+**Command line test:**
 ```bash
-# Replace YOUR_IP with your server's IP address
-curl http://YOUR_IP/
-curl http://YOUR_IP/hello/
-curl http://YOUR_IP/whoami/
+# Test from your local machine
+curl https://yourdomain.com
+curl https://hello.yourdomain.com
+curl https://whoami.yourdomain.com
 ```
 
-### Step 5: Make Changes and Auto-Deploy
-
-Now test the automatic deployment by adding a new service:
-
-#### 5.1. Add a New Service
-
-Edit `compose.yaml` on GitHub or locally and add a new service:
-
-```yaml
-services:
-  # ... existing services ...
-
-  hello2:
-    image: crccheck/hello-world:latest
-    x-monoserver-default-port: "8000"
-```
-
-#### 5.2. Commit and Push
-
-```bash
-git add compose.yaml
-git commit -m "feat: add hello2 service"
-git push origin main
-```
-
-#### 5.3. Watch Auto-Deployment
-
-1. Go to **Actions** tab on GitHub
-2. You'll see a new workflow run triggered automatically
-3. Wait for it to complete
-4. Access the new service: `http://YOUR_IP/hello2/`
-
-**No manual intervention needed!** Every time you push changes to `compose.yaml`, the deployment happens automatically.
-
-
-## How Automatic Updates Work
-
-### When you change `compose.yaml`
-
-1. **Trigger**: GitHub Actions detects changes to `compose.yaml`
-2. **Generate**: `nginx/routes.conf` is automatically regenerated with path-based routes
-3. **Commit**: Changes to `nginx/routes.conf` are committed back to the repo
-4. **Deploy**: Server pulls changes and updates containers
-5. **Reload**: Nginx reloads configuration **without downtime**
-
-**Key point:** `docker compose up -d` only restarts containers that changed. Unchanged containers keep running.
-
-### When `nginx/routes.conf` changes
-
-The workflow automatically runs:
-```bash
-docker compose exec monoserver-nginx-main nginx -s reload
-```
-
-This tells nginx to:
-- ✅ Read new configuration file
-- ✅ Start new worker processes with new config
-- ✅ Gracefully shut down old worker processes
-- ✅ **Zero downtime** - no dropped connections
-
-### When services are added/removed
-
-**Adding a service:**
-1. Add to `compose.yaml` with `x-monoserver-default-port` (optional)
-2. Push to GitHub
-3. GitHub Actions regenerates `routes.conf` with new `/service/` path
-4. Server starts the new container
-5. Nginx adds the new route automatically
-
-**Removing a service:**
-1. Remove from `compose.yaml`
-2. Push to GitHub
-3. GitHub Actions regenerates `routes.conf` without that service
-4. Server stops the container
-5. Nginx removes the route automatically
-
-**No manual intervention needed!** Path-based routing requires no DNS configuration.
+🎉 **You should see valid SSL certificates!** Caddy automatically obtained certificates from Let's Encrypt.
 
 ## Usage
 
 ### Adding a New Service
 
-1. Edit `compose.yaml` and add your service:
-   ```yaml
-   services:
-     monoserver-nginx-main:
-       image: nginx:1.27.3
-       # ... nginx config ...
+1. **Edit `compose.yaml`** and add your service with `x-caddy-port`:
 
-     hello:
-       image: crccheck/hello-world:latest
-       x-monoserver-default-port: "8000"
+```yaml
+services:
+  caddy:
+    # ... existing caddy config ...
 
-     myapp:
-       image: myapp:latest
-       x-monoserver-default-port: "8080"  # The port your app listens on
-   ```
+  hello:
+    image: hashicorp/http-echo
+    command: ["-text=Hello!"]
+    x-caddy-port: "5678"  # The port your app listens on
 
-   **Note:** `x-monoserver-default-port` tells nginx which port to proxy to. If omitted, nginx uses the port the client connected to.
+  myapp:
+    image: myapp:latest
+    x-caddy-port: "8080"  # ← Add this line
+```
 
-2. Commit and push:
-   ```bash
-   git add compose.yaml
-   git commit -m "feat: add myapp service"
-   git push origin main
-   ```
+2. **Commit and push:**
 
-3. Access your service:
-   ```bash
-   # After GitHub Actions completes deployment
-   curl http://YOUR_IP/myapp/
-   ```
+```bash
+git add compose.yaml
+git commit -m "[services] add myapp service"
+git push origin main
+```
 
-**That's it!** No need to manually create nginx configs. The generator creates path-based routes automatically:
-- `compose.yaml` service `myapp` → nginx route `/myapp/` → backend `http://myapp:8080/`
+3. **GitHub Actions automatically:**
+   - Generates `Caddyfile` with `myapp.yourdomain.com` route
+   - Commits the `Caddyfile` back to repository
+   - Deploys to server
+   - Caddy obtains SSL certificate for `myapp.yourdomain.com`
+   - Service becomes available at `https://myapp.yourdomain.com`
+
+**That's it!** No manual SSL certificate configuration needed.
+
+### How the `x-caddy-port` Field Works
+
+The `x-caddy-port` field tells Caddy which port your container listens on:
+
+```yaml
+myapp:
+  image: myapp:latest
+  x-caddy-port: "8080"
+```
+
+This generates the following Caddy configuration:
+```
+myapp.yourdomain.com {
+  reverse_proxy myapp:8080
+}
+```
+
+**Services without `x-caddy-port` are not exposed** via Caddy.
+- They can still run internally or be accessed via other means (e.g., Docker networks).
+
+### Removing a Service
+
+1. Remove the service from `compose.yaml`
+2. Commit and push
+3. GitHub Actions automatically:
+   - Removes the subdomain route from `Caddyfile`
+   - Stops the container on the server
+   - Caddy revokes the SSL certificate
+
+
+## How It Works
+
+### Subdomain Routing
+
+When you add a service with `x-caddy-port`:
+```yaml
+hello:
+  image: hashicorp/http-echo
+  x-caddy-port: "5678"
+```
+
+The `caddyfile-generator` creates:
+```
+hello.yourdomain.com {
+  reverse_proxy hello:5678
+}
+```
+
+This means:
+- Request to `https://hello.yourdomain.com`
+- → Caddy receives request, terminates SSL
+- → Caddy proxies to `http://hello:5678` (internal Docker network)
+- → Response sent back with SSL
+
+### Zero-Downtime Reloads
+
+When `Caddyfile` changes, the deployment workflow runs:
+```bash
+docker compose exec -w /etc/caddy caddy caddy reload
+```
+
+Caddy:
+- ✅ Reads new configuration
+- ✅ Starts new worker processes
+- ✅ Gracefully shuts down old workers
+- ✅ **No dropped connections or downtime**
+
+### Git-Based Workflow
+
+```
+Developer pushes to GitHub
+         ↓
+GitHub Actions triggered
+         ↓
+Generate Caddyfile from compose.yaml
+         ↓
+Commit Caddyfile back to repository
+         ↓
+SSH to server
+         ↓
+Pull latest code
+         ↓
+docker compose up -d
+         ↓
+Caddy reload (zero downtime)
+         ↓
+SSL certificates auto-renewed if needed
+```
 
 ## Project Structure
 
 ```
 monoserver/
 ├── compose.yaml                    # Docker Compose service definitions
-├── nginx/
-│   ├── nginx.conf                 # Main Nginx configuration
-│   └── routes.conf                # Auto-generated path-based routes
-├── nginx-config-generator/         # TypeScript generator for routes.conf
+├── Caddyfile                       # Auto-generated Caddy configuration
+├── caddyfile-generator/            # TypeScript generator for Caddyfile
 │   ├── src/
-│   │   ├── index.ts               # Main generator logic
-│   │   └── test-runner.ts         # Test suite
-│   └── test/                      # Test cases
+│   │   ├── index.ts                # Main generator logic
+│   │   └── test-runner.ts          # Test suite
+│   ├── test/                       # Test cases
+│   └── package.json                # npm scripts: generate, test
 ├── scripts/
-│   └── install-docker-rootless.sh # Docker installation script
-└── .github/
-    └── workflows/
-        └── deploy.yml             # Deployment automation
+│   └── install-docker-rootless.sh  # Docker installation script
+├── .github/
+│   └── workflows/
+│       └── deploy.yml              # Deployment automation
+└── README.md                       # This file
 ```
 
 ## Local Development
 
-For local development and testing without deploying to server:
+For local testing without a domain:
 
 ```bash
-# Generate nginx routes configuration
-cd nginx-config-generator
+# Generate Caddyfile
+cd caddyfile-generator
 npm install
 npm run generate
 
@@ -388,17 +414,83 @@ npm run generate
 cd ..
 docker compose up
 
-# Check service status
-docker compose ps
-
-# Test services locally
-curl http://localhost/
-curl http://localhost/hello/
-curl http://localhost/whoami/
+# Access via localhost subdomains (add to /etc/hosts)
+# 127.0.0.1 hello.localhost whoami.localhost
+curl http://hello.localhost
+curl http://whoami.localhost
 
 # View logs
-docker compose logs -f
+docker compose logs -f caddy
 
 # Stop services
 docker compose down
 ```
+
+**Note**: Local development won't have HTTPS because Let's Encrypt requires a valid domain. Caddy will serve HTTP only for `localhost`.
+
+## Troubleshooting
+
+### SSL Certificate Not Working
+
+**Check if Caddy obtained certificates:**
+```bash
+docker compose exec caddy caddy list-certificates
+```
+
+**Common issues:**
+- Domain not pointing to server IP → Check DNS with `ping yourdomain.com`
+- Firewall blocking ports 80/443 → Check with `sudo ufw status` or cloud provider firewall
+- Rate limit from Let's Encrypt → Wait 1 hour or use staging certificates
+
+**Check Caddy logs:**
+```bash
+docker compose logs caddy | grep -i "certificate"
+```
+
+### Service Not Accessible
+
+**Verify container is running:**
+```bash
+docker compose ps
+```
+
+**Check if service has `x-caddy-port`:**
+```bash
+grep -A 2 "myservice:" compose.yaml
+```
+
+**Verify Caddyfile was generated:**
+```bash
+cat Caddyfile | grep myservice
+```
+
+**Test internal connectivity:**
+```bash
+docker compose exec caddy wget -O- http://myservice:PORT
+```
+
+### GitHub Actions Deployment Failing
+
+**Check secrets are set correctly:**
+- `GCE_HOST` should be your domain (e.g., `example.com`), not IP
+- `GCE_USER` should match server username
+- `GCE_SSH_KEY` should be complete private key with BEGIN/END lines
+
+**Check SSH connectivity:**
+```bash
+# From local machine
+ssh -i ~/.ssh/your_key YOUR_USER@YOUR_DOMAIN
+```
+
+## Security Considerations
+
+- **Use private repository** to prevent exposing your domain name
+- **Don't commit secrets** to the repository (use GitHub Secrets)
+- **Keep Docker updated** for security patches
+- **Use rootless Docker** (included in installation script)
+- **SSL certificates auto-renewed** by Caddy
+- **Firewall recommended**: Only allow ports 22 (SSH), 80 (HTTP), 443 (HTTPS)
+
+## License
+
+This project is open source and available under the MIT License.

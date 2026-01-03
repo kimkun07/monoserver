@@ -77,12 +77,15 @@ jobs:
     - name: Deploy to Google Compute Engine
       if: github.ref == 'refs/heads/main'
       uses: appleboy/ssh-action@v1.2.4
+      env:
+        REPO_NAME: ${{ github.event.repository.name }}
       with:
         host: ${{ secrets.GCE_HOST }}
         username: ${{ secrets.GCE_USER }}
         key: ${{ secrets.GCE_SSH_KEY }}
         timeout: 30s
         command_timeout: 30m
+        envs: REPO_NAME
         # protocol: tcp6  # IPv6 support disabled, using default IPv4 (tcp)
 
         script: |
@@ -92,7 +95,7 @@ jobs:
 
           echo "Starting deployment to GCE..."
 
-          cd monoserver || { echo "❌ Error: monoserver directory not found"; exit 1; }
+          cd "$REPO_NAME" || { echo "❌ Error: $REPO_NAME directory not found"; exit 1; }
 
           # Pull latest changes
           echo "Pulling latest changes from main branch..."
